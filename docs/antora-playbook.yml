@@ -1,8 +1,7 @@
 site:
-  # TODO: Adjust project meta
-  title: Go Bootstrap
-  start_page: go-bootstrap::index.adoc
-  url: https://vshn.github.io/go-bootstrap
+  title: Odoo Adapter for APPUiO Cloud
+  start_page: appuio-odoo-adapter::index.adoc
+  url: https://vshn.github.io/appuio-odoo-adapter
 content:
   sources:
     - url: ../antora

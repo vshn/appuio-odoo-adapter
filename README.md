@@ -1,15 +1,15 @@
-# go-bootstrap
+# Odoo Adapter for APPUiO Cloud
 
-[![Build](https://img.shields.io/github/workflow/status/vshn/go-bootstrap/Test)][build]
-![Go version](https://img.shields.io/github/go-mod/go-version/vshn/go-bootstrap)
-[![Version](https://img.shields.io/github/v/release/vshn/go-bootstrap)][releases]
-[![Maintainability](https://img.shields.io/codeclimate/maintainability/vshn/go-bootstrap)][codeclimate]
-[![Coverage](https://img.shields.io/codeclimate/coverage/vshn/go-bootstrap)][codeclimate]
-[![GitHub downloads](https://img.shields.io/github/downloads/vshn/go-bootstrap/total)][releases]
+[![Build](https://img.shields.io/github/workflow/status/vshn/appuio-odoo-adapter/Test)][build]
+![Go version](https://img.shields.io/github/go-mod/go-version/vshn/appuio-odoo-adapter)
+[![Version](https://img.shields.io/github/v/release/vshn/appuio-odoo-adapter)][releases]
+[![Maintainability](https://img.shields.io/codeclimate/maintainability/vshn/appuio-odoo-adapter)][codeclimate]
+[![Coverage](https://img.shields.io/codeclimate/coverage/vshn/appuio-odoo-adapter)][codeclimate]
+[![GitHub downloads](https://img.shields.io/github/downloads/vshn/appuio-odoo-adapter/total)][releases]
 
-[build]: https://github.com/vshn/go-bootstrap/actions?query=workflow%3ATest
-[releases]: https://github.com/vshn/go-bootstrap/releases
-[codeclimate]: https://codeclimate.com/github/vshn/go-bootstrap
+[build]: https://github.com/vshn/appuio-odoo-adapter/actions?query=workflow%3ATest
+[releases]: https://github.com/vshn/appuio-odoo-adapter/releases
+[codeclimate]: https://codeclimate.com/github/vshn/appuio-odoo-adapter
 
 Template repository for common Go setups
 

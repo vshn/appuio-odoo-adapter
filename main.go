@@ -19,13 +19,11 @@ var (
 	commit  = "-dirty-"
 	date    = time.Now().Format("2006-01-02")
 
-	// TODO: Adjust app name
-	appName     = "go-bootstrap"
-	appLongName = "a generic bootstrapping project"
+	appName     = "odoo-adapter"
+	appLongName = "Adapter for APPUiO Cloud with Odoo as implementation"
 
-	// TODO: Adjust or clear env var prefix
 	// envPrefix is the global prefix to use for the keys in environment variables
-	envPrefix = "BOOTSTRAP"
+	envPrefix = "OA"
 )
 
 func main() {
