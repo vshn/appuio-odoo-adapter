@@ -5,12 +5,14 @@ import (
 	"net/url"
 
 	"github.com/urfave/cli/v2"
+	"github.com/vshn/appuio-odoo-adapter/odoo"
 )
 
 type syncCommand struct {
 	OdooURL      string
 	OdooUsername string
 	OdooPassword string
+	OdooDB       string
 }
 
 var syncCommandName = "sync"
@@ -24,6 +26,7 @@ func newSyncCommand() *cli.Command {
 		Action: command.execute,
 		Flags: []cli.Flag{
 			newOdooURLFlag(&command.OdooURL),
+			newOdooDBFlag(&command.OdooDB),
 			newOdooUsernameFlag(&command.OdooUsername),
 			newOdooPasswordFlag(&command.OdooPassword),
 		},
@@ -31,7 +34,6 @@ func newSyncCommand() *cli.Command {
 }
 
 func (c *syncCommand) validate(context *cli.Context) error {
-	_ = LogMetadata(context)
 	log := AppLogger(context).WithName(syncCommandName)
 	log.V(1).Info("validating config")
 	// The `Required` property in the StringFlag above already checks if it's non-empty.
@@ -42,8 +44,16 @@ func (c *syncCommand) validate(context *cli.Context) error {
 }
 
 func (c *syncCommand) execute(context *cli.Context) error {
+	_ = LogMetadata(context)
 	log := AppLogger(context).WithName(syncCommandName)
-	log.Info("Hello from sync command!", "config", c)
+
+	client := odoo.NewClient(c.OdooURL, c.OdooDB)
+	log.V(1).Info("Logging in to Odoo...", "url", c.OdooURL, "db", c.OdooDB)
+	session, err := client.Login(c.OdooUsername, c.OdooPassword)
+	if err != nil {
+		return err
+	}
+	log.Info("Login succeeded", "uid", session.UID)
 	return nil
 }
 

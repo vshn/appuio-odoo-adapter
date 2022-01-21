@@ -9,6 +9,11 @@ func newOdooURLFlag(destination *string) *cli.StringFlag {
 		EnvVars: envVars("ODOO_URL"), Destination: destination, Required: true, DefaultText: defaultTextForRequiredFlags}
 }
 
+func newOdooDBFlag(destination *string) *cli.StringFlag {
+	return &cli.StringFlag{Name: "odoo-db", Usage: "Odoo Database name",
+		EnvVars: envVars("ODOO_DB"), Destination: destination, Required: true, DefaultText: defaultTextForRequiredFlags}
+}
+
 func newOdooUsernameFlag(destination *string) *cli.StringFlag {
 	return &cli.StringFlag{Name: "odoo-username", Usage: "Odoo ERP username for authentication",
 		EnvVars: envVars("ODOO_USERNAME"), Destination: destination, Required: true, DefaultText: defaultTextForRequiredFlags}
