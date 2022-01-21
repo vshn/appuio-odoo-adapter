@@ -1,0 +1,34 @@
+= Development With Odoo
+
+== Prerequisites
+
+* Administrator credentials for Odoo Test instance
+* `kubectl` and access to Namespace where Odoo runs
+* `oc` (OpenShift client) to login to APPUiO Zone.
+
+== Using Port Forward
+
+. Login to https://console.cloudscale-lpg-2.appuio.cloud[Console] and copy the `oc` login command
+
+. Login via CLI
++
+[source,bash]
+----
+oc login --token=sha256~xxx --server=https://api.cloudscale-lpg-2.appuio.cloud:6443
+----
+
+. Port-forward the Odoo service
++
+[source,bash]
+----
+oc -n vshn-odoo-test port-forward svc/odoo 8080:8000
+----
+
+. Run the project
++
+[source,bash]
+----
+export OA_ODOO_USERNAME=<admin-username>
+export OA_ODOO_PASSWORD=<admin-password>
+go run . sync --odoo-url=http://localhost:8080 --odoo-db=<database-name>
+----

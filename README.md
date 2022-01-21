@@ -19,6 +19,8 @@ Such a plugin is called "adapter" in this context.
 
 VSHN uses currently Odoo as its ERP software and this repository "implements" the adapter to serve as a bridge between APPUiO Cloud and Odoo.
 
+## Documentation
+
 **Architecture documentation**: https://kb.vshn.ch/appuio-cloud
 
 **Adapter documentation**: https://vshn.github.io/appuio-odoo-adapter
