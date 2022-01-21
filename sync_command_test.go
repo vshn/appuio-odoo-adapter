@@ -23,8 +23,8 @@ func TestExampleCommand_Validate(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			// arrange...
-			command := exampleCommand{
-				ExampleFlag: tt.givenExampleFlag,
+			command := syncCommand{
+				OdooURL: tt.givenExampleFlag,
 			}
 			ctx := newAppContext(t)
 
