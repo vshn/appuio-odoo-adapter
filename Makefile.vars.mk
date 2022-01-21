@@ -1,12 +1,11 @@
 ## These are some common variables for Make
 
 PROJECT_ROOT_DIR = .
-# TODO: Adjust project meta
-PROJECT_NAME ?= go-bootstrap
+PROJECT_NAME ?= appuio-odoo-adapter
 PROJECT_OWNER ?= vshn
 
 ## BUILD:go
-BIN_FILENAME ?= $(PROJECT_NAME)
+BIN_FILENAME ?= odoo-adapter
 
 ## BUILD:docker
 DOCKER_CMD ?= docker

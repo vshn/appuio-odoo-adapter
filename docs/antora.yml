@@ -1,6 +1,5 @@
-# TODO: Adjust project meta
-name: go-bootstrap
-title: Go Bootstrap
+name: appuio-odoo-adapter
+title: Odoo Adapter
 version: master
 start_page: ROOT:index.adoc
 nav:

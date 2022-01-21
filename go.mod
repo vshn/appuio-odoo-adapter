@@ -1,5 +1,5 @@
 // TODO: Replace module name
-module github.com/vshn/go-bootstrap
+module github.com/vshn/appuio-odoo-adapter
 
 go 1.17
 
