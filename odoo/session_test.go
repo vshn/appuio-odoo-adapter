@@ -1,7 +1,6 @@
 package odoo
 
 import (
-	"context"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -57,7 +56,8 @@ func TestLogin_Success(t *testing.T) {
 
 	// Login
 	client := NewClient(odooMock.URL, "TestDB")
-	session, err := client.Login(context.Background(), testLogin, testPassword)
+	client.UseDebugLogger(true)
+	session, err := client.Login(newTestContext(t), testLogin, testPassword)
 	require.NoError(t, err)
 	assert.Equal(t, testUID, session.UID)
 	assert.Equal(t, testSID, session.ID)
@@ -94,7 +94,8 @@ func TestLogin_BadCredentials(t *testing.T) {
 
 	// Do request
 	client := NewClient(odooMock.URL, "TestDB")
-	session, err := client.Login(context.Background(), testLogin, testPassword)
+	client.UseDebugLogger(true)
+	session, err := client.Login(newTestContext(t), testLogin, testPassword)
 	require.EqualError(t, err, "invalid credentials")
 	assert.Nil(t, session)
 	assert.Equal(t, 1, numRequests)
@@ -126,7 +127,8 @@ func TestLogin_BadResponse(t *testing.T) {
 
 	// Do request
 	client := NewClient(odooMock.URL, "TestDB")
-	session, err := client.Login(context.Background(), "", "")
+	client.UseDebugLogger(true)
+	session, err := client.Login(newTestContext(t), "", "")
 	require.EqualError(t, err, "error from Odoo: &{Odoo Server Error 200 map[arguments:[] debug:Traceback xxx message: name:werkzeug.exceptions.Foo]}")
 	assert.Nil(t, session)
 	assert.Equal(t, 1, numRequests)
