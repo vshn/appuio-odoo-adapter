@@ -96,15 +96,8 @@ func (c *Client) makeRequest(sid string, body io.Reader) (*http.Response, error)
 }
 
 func (c *Client) unmarshalResponse(body io.ReadCloser, into interface{}) error {
-	b, err := io.ReadAll(body)
 	defer body.Close()
-	if err != nil {
-		return fmt.Errorf("read result: %w", err)
-	}
-
-	buf := bytes.NewBuffer(b)
-	// decode response
-	if err := DecodeResult(buf, &into); err != nil {
+	if err := DecodeResult(body, &into); err != nil {
 		return fmt.Errorf("decoding result: %w", err)
 	}
 	return nil
