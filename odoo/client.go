@@ -85,16 +85,30 @@ func (t *debugTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	return res, err
 }
 
-func (c *Client) makeRequest(ctx context.Context, session *Session, body io.Reader) (*http.Response, error) {
-	// Create request
-	req, err := http.NewRequest("POST", c.baseURL+"/web/dataset/search_read", body)
+// SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
+// Depending on the JSON fields returned a custom json.Unmarshaler needs to be written since Odoo sets undefined fields to `false` instead of null.
+func (c *Client) SearchGenericModel(ctx context.Context, session *Session, model SearchReadModel, into interface{}) error {
+	body, err := NewJSONRPCRequest(&model).Encode()
 	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
+		return newEncodingRequestError(err)
+	}
+
+	// Create request
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.parsedURL.String()+"/web/dataset/search_read", body)
+	if err != nil {
+		return newCreatingRequestError(err)
 	}
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("cookie", "session_id="+session.SessionID)
 
-	// Send request
+	resp, err := c.sendRequest(req)
+	if err != nil {
+		return err
+	}
+	return c.unmarshalResponse(resp.Body, into)
+}
+
+func (c *Client) sendRequest(req *http.Request) (*http.Response, error) {
 	res, err := c.http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("sending HTTP request: %w", err)
@@ -106,7 +120,7 @@ func (c *Client) makeRequest(ctx context.Context, session *Session, body io.Read
 
 func (c *Client) unmarshalResponse(body io.ReadCloser, into interface{}) error {
 	defer body.Close()
-	if err := DecodeResult(body, &into); err != nil {
+	if err := DecodeResult(body, into); err != nil {
 		return fmt.Errorf("decoding result: %w", err)
 	}
 	return nil

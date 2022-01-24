@@ -15,9 +15,9 @@ var (
 
 // Session information
 type Session struct {
-	// ID is the session ID.
+	// SessionID is the session SessionID.
 	// Is always set, no matter the authentication outcome.
-	ID string `json:"session_id,omitempty"`
+	SessionID string `json:"session_id,omitempty"`
 	// UID is the user's ID as an int, or the boolean `false` if authentication failed.
 	UID int `json:"uid,omitempty"`
 }
@@ -46,11 +46,11 @@ func (c Client) requestSession(ctx context.Context, login string, password strin
 	// Prepare request
 	body, err := NewJSONRPCRequest(loginParams{c.db, login, password}).Encode()
 	if err != nil {
-		return nil, fmt.Errorf("encoding request: %w", err)
+		return nil, newEncodingRequestError(err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.parsedURL.String()+"/web/session/authenticate", body)
 	if err != nil {
-		return nil, fmt.Errorf("login: building HTTP request: %w", err)
+		return nil, newCreatingRequestError(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 

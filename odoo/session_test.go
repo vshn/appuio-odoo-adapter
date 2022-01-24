@@ -60,7 +60,7 @@ func TestLogin_Success(t *testing.T) {
 	session, err := client.Login(newTestContext(t), testLogin, testPassword)
 	require.NoError(t, err)
 	assert.Equal(t, testUID, session.UID)
-	assert.Equal(t, testSID, session.ID)
+	assert.Equal(t, testSID, session.SessionID)
 	assert.Equal(t, 1, numRequests)
 }
 

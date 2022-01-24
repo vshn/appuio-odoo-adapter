@@ -83,3 +83,11 @@ func DecodeResult(buf io.Reader, result interface{}) error {
 
 	return json.Unmarshal(*res.Result, result)
 }
+
+func newEncodingRequestError(err error) error {
+	return fmt.Errorf("encoding request: %w", err)
+}
+
+func newCreatingRequestError(err error) error {
+	return fmt.Errorf("creating request: %w", err)
+}
