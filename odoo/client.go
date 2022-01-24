@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/go-logr/logr"
 )
 
 // Client is the base struct that holds information required to talk to Odoo
@@ -22,34 +22,43 @@ type Client struct {
 
 // NewClient returns a new client with its basic fields set
 func NewClient(baseURL, db string) *Client {
-	transport := http.DefaultTransport
-	if os.Getenv("DEBUG") != "" {
-		transport = newDebugTransport()
-	}
-	return &Client{strings.TrimSuffix(baseURL, "/"), db, &http.Client{
-		Timeout:   10 * time.Second,
-		Jar:       nil, // don't save any cookies!
-		Transport: transport,
-	}}
+	return &Client{
+		baseURL: strings.TrimSuffix(baseURL, "/"),
+		db:      db,
+		http: &http.Client{
+			Timeout: 10 * time.Second,
+			Jar:     nil, // don't save any cookies!
+		}}
 }
 
 type debugTransport struct {
-	pwRe *regexp.Regexp
+	pwRe   *regexp.Regexp
+	logger logr.Logger
 }
 
-func newDebugTransport() *debugTransport {
+func newDebugTransport(logger logr.Logger) *debugTransport {
 	return &debugTransport{
-		pwRe: regexp.MustCompile(`("password":\s?").+("[,}])`),
+		pwRe:   regexp.MustCompile(`("password":\s?").+("[,}])`),
+		logger: logger,
 	}
 }
 
+// SetDebugLogger sets the http.Transport field of the internal http client with a transport implementation that logs the raw contents of requests and responses.
+// The log level used is '2'.
+// Any "password":"..." byte content is replaced with a placeholder to avoid leaking credentials.
+// Still, this should not be called in production as other sensitive information might be leaked.
+func (c Client) SetDebugLogger(logger logr.Logger) {
+	c.http.Transport = newDebugTransport(logger)
+}
+
+// RoundTrip implements http.RoundTripper.
 func (t *debugTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	if r.Body != nil {
 		reqBody, _ := r.GetBody()
 		defer reqBody.Close()
 		buf, _ := ioutil.ReadAll(reqBody)
 		buf = t.pwRe.ReplaceAll(buf, []byte(`$1[confidential]$2`))
-		log.Printf("%s %s ---> %s", r.Method, r.URL.Path, string(buf))
+		t.logger.V(2).Info(fmt.Sprintf("%s %s ---> %s", r.Method, r.URL.Path, string(buf)))
 	}
 
 	res, err := http.DefaultTransport.RoundTrip(r)
@@ -57,7 +66,7 @@ func (t *debugTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	if res.Body != nil {
 		defer res.Body.Close()
 		buf, _ := ioutil.ReadAll(res.Body)
-		log.Print("<--- ", string(buf))
+		t.logger.V(2).Info(fmt.Sprintf("%s %s <--- %s", r.Method, r.URL.Path, string(buf)))
 		res.Body = io.NopCloser(bytes.NewReader(buf))
 	}
 

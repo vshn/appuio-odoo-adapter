@@ -48,6 +48,7 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	log := AppLogger(context).WithName(syncCommandName)
 
 	client := odoo.NewClient(c.OdooURL, c.OdooDB)
+	client.SetDebugLogger(log)
 	log.V(1).Info("Logging in to Odoo...", "url", c.OdooURL, "db", c.OdooDB)
 	session, err := client.Login(context.Context, c.OdooUsername, c.OdooPassword)
 	if err != nil {
