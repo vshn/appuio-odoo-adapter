@@ -1,6 +1,7 @@
 package odoo
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,15 +33,20 @@ type loginParams struct {
 //  - the credentials were wrong,
 //  - encoding or sending the request,
 //  - or decoding the request failed.
-func (c Client) Login(login, password string) (*Session, error) {
+func (c Client) Login(ctx context.Context, login, password string) (*Session, error) {
 	// Prepare request
 	body, err := NewJSONRPCRequest(loginParams{c.db, login, password}).Encode()
 	if err != nil {
 		return nil, fmt.Errorf("encoding request: %w", err)
 	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/web/session/authenticate", body)
+	if err != nil {
+		return nil, fmt.Errorf("login: building HTTP request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
 
 	// Send request
-	res, err := c.http.Post(c.baseURL+"/web/session/authenticate", "application/json", body)
+	res, err := c.http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("login: sending HTTP request: %w", err)
 	}

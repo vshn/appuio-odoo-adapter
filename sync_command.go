@@ -36,7 +36,7 @@ func newSyncCommand() *cli.Command {
 func (c *syncCommand) validate(context *cli.Context) error {
 	log := AppLogger(context).WithName(syncCommandName)
 	log.V(1).Info("validating config")
-	// The `Required` property in the StringFlag above already checks if it's non-empty.
+	// The `Required` property in the StringFlag already checks if it's non-empty.
 	if _, err := url.Parse(c.OdooURL); err != nil {
 		return fmt.Errorf("could not parse %q as URL value for flag %s: %s", c.OdooURL, newOdooURLFlag(nil).Name, err)
 	}
@@ -49,7 +49,7 @@ func (c *syncCommand) execute(context *cli.Context) error {
 
 	client := odoo.NewClient(c.OdooURL, c.OdooDB)
 	log.V(1).Info("Logging in to Odoo...", "url", c.OdooURL, "db", c.OdooDB)
-	session, err := client.Login(c.OdooUsername, c.OdooPassword)
+	session, err := client.Login(context.Context, c.OdooUsername, c.OdooPassword)
 	if err != nil {
 		return err
 	}
