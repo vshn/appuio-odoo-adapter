@@ -2,10 +2,12 @@ package odoo
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -15,16 +17,23 @@ import (
 
 // Client is the base struct that holds information required to talk to Odoo
 type Client struct {
-	baseURL string
-	db      string
-	http    *http.Client
+	baseURL   string
+	parsedURL *url.URL
+	db        string
+	http      *http.Client
 }
 
-// NewClient returns a new client with its basic fields set
+// NewClient returns a new client with its basic fields set.
+// It panics if baseURL is not parseable with url.Parse.
 func NewClient(baseURL, db string) *Client {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		panic(fmt.Errorf("proper URL format is required: %w", err))
+	}
 	return &Client{
-		baseURL: strings.TrimSuffix(baseURL, "/"),
-		db:      db,
+		baseURL:   strings.TrimSuffix(baseURL, "/"),
+		parsedURL: u,
+		db:        db,
 		http: &http.Client{
 			Timeout: 10 * time.Second,
 			Jar:     nil, // don't save any cookies!
@@ -76,14 +85,14 @@ func (t *debugTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	return res, err
 }
 
-func (c *Client) makeRequest(sid string, body io.Reader) (*http.Response, error) {
+func (c *Client) makeRequest(ctx context.Context, session *Session, body io.Reader) (*http.Response, error) {
 	// Create request
 	req, err := http.NewRequest("POST", c.baseURL+"/web/dataset/search_read", body)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 	req.Header.Set("content-type", "application/json")
-	req.Header.Set("cookie", "session_id="+sid)
+	req.Header.Set("cookie", "session_id="+session.SessionID)
 
 	// Send request
 	res, err := c.http.Do(req)

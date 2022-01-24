@@ -48,7 +48,7 @@ func (c Client) requestSession(ctx context.Context, login string, password strin
 	if err != nil {
 		return nil, fmt.Errorf("encoding request: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/web/session/authenticate", body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.parsedURL.String()+"/web/session/authenticate", body)
 	if err != nil {
 		return nil, fmt.Errorf("login: building HTTP request: %w", err)
 	}
