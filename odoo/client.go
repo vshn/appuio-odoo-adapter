@@ -37,14 +37,36 @@ func NewClient(baseURL, db string) *Client {
 
 // SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
 // Depending on the JSON fields returned a custom json.Unmarshaler needs to be written since Odoo sets undefined fields to `false` instead of null.
-func (c *Client) SearchGenericModel(ctx context.Context, session *Session, model SearchReadModel, into interface{}) error {
+func (c Client) SearchGenericModel(ctx context.Context, session *Session, model SearchReadModel, into interface{}) error {
+	return c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/search_read", model, into)
+}
+
+func (c Client) CreateGenericModel(ctx context.Context, session *Session, model WriteModel) (int, error) {
+	if model.KWArgs == nil {
+		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
+	}
+	resultID := 0
+	err := c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/call_kw/create", model, &resultID)
+	return resultID, err
+}
+
+func (c Client) UpdateGenericModel(ctx context.Context, session *Session, model WriteModel) (bool, error) {
+	if model.KWArgs == nil {
+		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
+	}
+	updated := false
+	err := c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/call_kw/write", model, &updated)
+	return updated, err
+}
+
+func (c Client) executeGenericRequest(ctx context.Context, session *Session, url string, model interface{}, into interface{}) error {
 	body, err := NewJSONRPCRequest(&model).Encode()
 	if err != nil {
 		return newEncodingRequestError(err)
 	}
 
 	// Create request
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.parsedURL.String()+"/web/dataset/search_read", body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
 		return newCreatingRequestError(err)
 	}
