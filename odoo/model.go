@@ -37,11 +37,13 @@ type WriteModel struct {
 	// If Method is MethodCreate, then the slice may contain a single entity without an ID parameter.
 	// Example:
 	//  Args[0] = {Name: "New Name"}
-	// If Method is MethodWrite, then the first item has to be the numeric ID of the existing record.
+	// If Method is MethodWrite, then the first item has to be an array of the numeric ID of the existing record.
 	// Example:
-	//  Args[0] = 221
+	//  Args[0] = [221]
 	//  Args[1] = {Name: "Updated Name"}
-	Args   []interface{}          `json:"args"`
+	Args []interface{} `json:"args"`
+	// KWArgs is an additional object required to be non-nil, otherwise the request simply fails.
+	// In most cases it's enough to set it to `map[string]interface{}{}`.
 	KWArgs map[string]interface{} `json:"kwargs"`
 }
 

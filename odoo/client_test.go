@@ -55,6 +55,7 @@ func TestClient_UpdateGenericModel(t *testing.T) {
 
 	// Do request
 	client := NewClient(odooMock.URL, "TestDB")
+	client.UseDebugLogger(true)
 	result, err := client.UpdateGenericModel(newTestContext(t), &Session{}, WriteModel{})
 	require.NoError(t, err)
 	assert.True(t, result)

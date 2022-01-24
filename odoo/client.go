@@ -41,6 +41,7 @@ func (c Client) SearchGenericModel(ctx context.Context, session *Session, model 
 	return c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/search_read", model, into)
 }
 
+// CreateGenericModel accepts a WriteModel as a payload and executes a query to create the new data record.
 func (c Client) CreateGenericModel(ctx context.Context, session *Session, model WriteModel) (int, error) {
 	if model.KWArgs == nil {
 		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
@@ -50,6 +51,7 @@ func (c Client) CreateGenericModel(ctx context.Context, session *Session, model 
 	return resultID, err
 }
 
+// UpdateGenericModel accepts a WriteModel as a payload and executes a query to update an existing data record.
 func (c Client) UpdateGenericModel(ctx context.Context, session *Session, model WriteModel) (bool, error) {
 	if model.KWArgs == nil {
 		model.KWArgs = map[string]interface{}{} // set to non-null when serializing

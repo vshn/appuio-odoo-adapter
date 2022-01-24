@@ -51,12 +51,15 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	client := odoo.NewClient(c.OdooURL, c.OdooDB)
 	client.UseDebugLogger(context.Bool("debug"))
 	log.V(1).Info("Logging in to Odoo...", "url", c.OdooURL, "db", c.OdooDB)
-	session, err := client.Login(logr.NewContext(context.Context, log), c.OdooUsername, c.OdooPassword)
+
+	odooCtx := logr.NewContext(context.Context, log)
+
+	session, err := client.Login(odooCtx, c.OdooUsername, c.OdooPassword)
 	if err != nil {
 		return err
 	}
 	log.Info("Login succeeded", "uid", session.UID)
-	return nil
+	return err
 }
 
 func (c *syncCommand) shutdown(context *cli.Context) error {
