@@ -34,6 +34,15 @@ type loginParams struct {
 //  - encoding or sending the request,
 //  - or decoding the request failed.
 func (c Client) Login(ctx context.Context, login, password string) (*Session, error) {
+	resp, err := c.requestSession(ctx, login, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.decodeSession(resp)
+}
+
+func (c Client) requestSession(ctx context.Context, login string, password string) (*http.Response, error) {
 	// Prepare request
 	body, err := NewJSONRPCRequest(loginParams{c.db, login, password}).Encode()
 	if err != nil {
@@ -46,14 +55,17 @@ func (c Client) Login(ctx context.Context, login, password string) (*Session, er
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send request
-	res, err := c.http.Do(req)
+	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("login: sending HTTP request: %w", err)
 	}
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("login: expected HTTP status 200 OK, got %s", res.Status)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("login: expected HTTP status 200 OK, got %s", resp.Status)
 	}
+	return resp, nil
+}
 
+func (c Client) decodeSession(res *http.Response) (*Session, error) {
 	// Decode response
 	// We don't use DecodeResult here because we're interested in whether unmarshalling the result failed.
 	// If so, this is likely because "uid" is set to `false` which indicates an authentication failure.
