@@ -9,23 +9,14 @@ import (
 
 func TestExampleCommand_Validate(t *testing.T) {
 	tests := map[string]struct {
-		givenExampleFlag string
-		expectedError    string
+		expectedError string
 	}{
 		// TODO: test cases
-		"GivenEmptyFlag_ThenExpectError": {
-			expectedError: "option needs at least 3 characters: flag",
-		},
-		"GivenValidConfig_ThenExpectNoError": {
-			givenExampleFlag: "test",
-		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			// arrange...
-			command := exampleCommand{
-				ExampleFlag: tt.givenExampleFlag,
-			}
+			command := syncCommand{}
 			ctx := newAppContext(t)
 
 			// act...
