@@ -11,4 +11,4 @@
 //* xref:references/example.adoc[Example Reference]
 
 .Explanation
-//* xref:explanations/example.adoc[Example Explanation]
+* xref:explanations/odoo-category.adoc[Effects Of Invoice Category Parameters]
