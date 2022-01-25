@@ -9,12 +9,24 @@ import (
 // InvoiceCategory (alias "Section" in Invoices) visually categorizes line items into logical groups.
 type InvoiceCategory struct {
 	// ID is the data record identifier.
-	ID        int    `json:"id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Sequence  int    `json:"sequence,omitempty"`
-	PageBreak bool   `json:"pagebreak,omitempty"`
-	Separator bool   `json:"separator,omitempty"`
-	SubTotal  bool   `json:"subtotal,omitempty"`
+	ID int `json:"id,omitempty"`
+	// Name is the title of the category/section within an invoice.
+	Name string `json:"name,omitempty"`
+	// Sequence controls how line items are grouped together and how each category is ordered within an invoice.
+	//
+	// If there are line items that share the same category, but each category has a unique sequence number, then all line items are grouped together.
+	// In this case the order of line items in the invoice doesn't matter.
+	// The ordering among the categories themselves is ascending with the category with the lowest sequence number appearing at the top.
+	//
+	// If there are categories that share the same sequence number then the ordering of line items greatly matters within an invoice.
+	// Line items that share the same category but aren't sequentially defined in the invoice end up distributed ("as is") with the category appearing multiple times.
+	Sequence int `json:"sequence,omitempty"`
+	// PageBreak causes the next line item to be on the next page in a PDF (after the last line item).
+	PageBreak bool `json:"pagebreak,omitempty"`
+	// Separator causes a line printed with "***" after the last line item within the same category.
+	Separator bool `json:"separator,omitempty"`
+	// SubTotal causes an additional line printed with an accumulated subtotal of all line items within the same category.
+	SubTotal bool `json:"subtotal,omitempty"`
 }
 
 // CreateInvoiceCategory creates a new invoice category and returns the ID of the data record.
