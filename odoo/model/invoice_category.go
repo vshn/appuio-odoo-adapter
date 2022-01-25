@@ -48,11 +48,13 @@ func (o Odoo) FetchCategoryByID(ctx context.Context, id int) (*InvoiceCategory, 
 	return nil, nil
 }
 
-// SearchCategoriesByName searches for invoice categories with the given name.
+// SearchCategoriesByName searches for invoice categories that include the given string.
+// The search is case-insensitive.
 // If no results have been found, an empty slice is returned without error.
-func (o Odoo) SearchCategoriesByName(ctx context.Context, name string) ([]InvoiceCategory, error) {
-	// TODO: Set filters
-	return o.searchCategories(ctx, []odoo.Filter{})
+func (o Odoo) SearchCategoriesByName(ctx context.Context, searchString string) ([]InvoiceCategory, error) {
+	return o.searchCategories(ctx, []odoo.Filter{
+		[]string{"name", "ilike", searchString},
+	})
 }
 
 func (o Odoo) searchCategories(ctx context.Context, domainFilters []odoo.Filter) ([]InvoiceCategory, error) {
