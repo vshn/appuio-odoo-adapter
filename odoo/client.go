@@ -6,13 +6,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
 // Client is the base struct that holds information required to talk to Odoo
 type Client struct {
-	baseURL   string
 	parsedURL *url.URL
 	db        string
 	http      *http.Client
@@ -26,7 +24,6 @@ func NewClient(baseURL, db string) *Client {
 		panic(fmt.Errorf("proper URL format is required: %w", err))
 	}
 	return &Client{
-		baseURL:   strings.TrimSuffix(baseURL, "/"),
 		parsedURL: u,
 		db:        db,
 		http: &http.Client{
