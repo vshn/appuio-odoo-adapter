@@ -4,12 +4,12 @@ import "github.com/vshn/appuio-odoo-adapter/odoo"
 
 // Odoo is the developer-friendly odoo.Client with strongly-typed models.
 type Odoo struct {
-	session *odoo.Session
+	querier odoo.QueryExecutor
 }
 
 // NewOdoo creates a new Odoo client.
-func NewOdoo(session *odoo.Session) *Odoo {
+func NewOdoo(querier odoo.QueryExecutor) *Odoo {
 	return &Odoo{
-		session: session,
+		querier: querier,
 	}
 }
