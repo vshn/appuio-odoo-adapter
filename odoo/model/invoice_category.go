@@ -17,14 +17,14 @@ type InvoiceCategory struct {
 	SubTotal  bool   `json:"subtotal,omitempty"`
 }
 
-// CreateCategory creates a new invoice category and returns the ID of the data record.
+// CreateInvoiceCategory creates a new invoice category and returns the ID of the data record.
 // Note that setting InvoiceCategory.ID in the payload doesn't have an effect.
-func (o Odoo) CreateCategory(ctx context.Context, category InvoiceCategory) (int, error) {
+func (o Odoo) CreateInvoiceCategory(ctx context.Context, category InvoiceCategory) (int, error) {
 	return o.client.CreateGenericModel(ctx, o.session, odoo.NewCreateModel("sale_layout.category", category))
 }
 
-// UpdateCategory updates a given invoice category and returns true if the data record has been updated.
-func (o Odoo) UpdateCategory(ctx context.Context, category InvoiceCategory) (bool, error) {
+// UpdateInvoiceCategory updates a given invoice category and returns true if the data record has been updated.
+func (o Odoo) UpdateInvoiceCategory(ctx context.Context, category InvoiceCategory) (bool, error) {
 	m, err := odoo.NewUpdateModel("sale_layout.category", category.ID, category)
 	if err != nil {
 		return false, err
@@ -32,9 +32,19 @@ func (o Odoo) UpdateCategory(ctx context.Context, category InvoiceCategory) (boo
 	return o.client.UpdateGenericModel(ctx, o.session, m)
 }
 
-// FetchCategoryByID searches for the invoice category by ID and returns the first entry in the result.
+// DeleteInvoiceCategory updates a given invoice category and returns true if the data record has been updated.
+// For all existing invoices, the "section" field of all affected line items become empty.
+func (o Odoo) DeleteInvoiceCategory(ctx context.Context, category InvoiceCategory) (bool, error) {
+	m, err := odoo.NewDeleteModel("sale_layout.category", []int{category.ID})
+	if err != nil {
+		return false, err
+	}
+	return o.client.DeleteGenericModel(ctx, o.session, m)
+}
+
+// FetchInvoiceCategoryByID searches for the invoice category by ID and returns the first entry in the result.
 // If no result has been found, nil is returned without error.
-func (o Odoo) FetchCategoryByID(ctx context.Context, id int) (*InvoiceCategory, error) {
+func (o Odoo) FetchInvoiceCategoryByID(ctx context.Context, id int) (*InvoiceCategory, error) {
 	result, err := o.searchCategories(ctx, []odoo.Filter{
 		[]interface{}{"id", "in", []int{id}},
 	})
@@ -48,10 +58,10 @@ func (o Odoo) FetchCategoryByID(ctx context.Context, id int) (*InvoiceCategory, 
 	return nil, nil
 }
 
-// SearchCategoriesByName searches for invoice categories that include the given string.
+// SearchInvoiceCategoriesByName searches for invoice categories that include the given string.
 // The search is case-insensitive.
 // If no results have been found, an empty slice is returned without error.
-func (o Odoo) SearchCategoriesByName(ctx context.Context, searchString string) ([]InvoiceCategory, error) {
+func (o Odoo) SearchInvoiceCategoriesByName(ctx context.Context, searchString string) ([]InvoiceCategory, error) {
 	return o.searchCategories(ctx, []odoo.Filter{
 		[]string{"name", "ilike", searchString},
 	})

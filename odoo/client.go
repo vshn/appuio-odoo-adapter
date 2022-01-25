@@ -61,6 +61,17 @@ func (c Client) UpdateGenericModel(ctx context.Context, session *Session, model 
 	return updated, err
 }
 
+// DeleteGenericModel accepts a WriteModel as a payload and executes a query to delete an existing data record.
+// For the query to succeed it is required that the Model sets an ID.
+func (c Client) DeleteGenericModel(ctx context.Context, session *Session, model WriteModel) (bool, error) {
+	if model.KWArgs == nil {
+		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
+	}
+	deleted := false
+	err := c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/call_kw/unlink", model, &deleted)
+	return deleted, err
+}
+
 func (c Client) executeGenericRequest(ctx context.Context, session *Session, url string, model interface{}, into interface{}) error {
 	body, err := NewJSONRPCRequest(&model).Encode()
 	if err != nil {

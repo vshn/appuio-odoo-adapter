@@ -72,3 +72,21 @@ func NewUpdateModel(model string, id int, data interface{}) (WriteModel, error) 
 		},
 	}, nil
 }
+
+// NewDeleteModel returns a new WriteModel for deleting existing data records.
+func NewDeleteModel(model string, ids []int) (WriteModel, error) {
+	if len(ids) == 0 {
+		return WriteModel{}, fmt.Errorf("slice of ID(s) is required")
+	}
+	for i, id := range ids {
+		if id == 0 {
+			return WriteModel{}, fmt.Errorf("id cannot be zero (index: %d)", i)
+		}
+	}
+	return WriteModel{
+		KWArgs: map[string]interface{}{},
+		Method: MethodDelete,
+		Model:  model,
+		Args:   []interface{}{ids},
+	}, nil
+}
