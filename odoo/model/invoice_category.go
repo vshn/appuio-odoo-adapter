@@ -20,7 +20,7 @@ type InvoiceCategory struct {
 // CreateInvoiceCategory creates a new invoice category and returns the ID of the data record.
 // Note that setting InvoiceCategory.ID in the payload doesn't have an effect.
 func (o Odoo) CreateInvoiceCategory(ctx context.Context, category InvoiceCategory) (int, error) {
-	return o.client.CreateGenericModel(ctx, o.session, odoo.NewCreateModel("sale_layout.category", category))
+	return o.session.CreateGenericModel(ctx, odoo.NewCreateModel("sale_layout.category", category))
 }
 
 // UpdateInvoiceCategory updates a given invoice category and returns true if the data record has been updated.
@@ -29,7 +29,7 @@ func (o Odoo) UpdateInvoiceCategory(ctx context.Context, category InvoiceCategor
 	if err != nil {
 		return false, err
 	}
-	return o.client.UpdateGenericModel(ctx, o.session, m)
+	return o.session.UpdateGenericModel(ctx, m)
 }
 
 // DeleteInvoiceCategory updates a given invoice category and returns true if the data record has been updated.
@@ -39,7 +39,7 @@ func (o Odoo) DeleteInvoiceCategory(ctx context.Context, category InvoiceCategor
 	if err != nil {
 		return false, err
 	}
-	return o.client.DeleteGenericModel(ctx, o.session, m)
+	return o.session.DeleteGenericModel(ctx, m)
 }
 
 // FetchInvoiceCategoryByID searches for the invoice category by ID and returns the first entry in the result.
@@ -73,7 +73,7 @@ func (o Odoo) searchCategories(ctx context.Context, domainFilters []odoo.Filter)
 	}
 	result := &readResult{}
 
-	err := o.client.SearchGenericModel(ctx, o.session, odoo.SearchReadModel{
+	err := o.session.SearchGenericModel(ctx, odoo.SearchReadModel{
 		Model:  "sale_layout.category",
 		Domain: domainFilters,
 		Fields: []string{"name", "sequence", "pagebreak", "separator", "subtotal"},

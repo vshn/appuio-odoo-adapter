@@ -2,134 +2,149 @@ package odoo
 
 import (
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestLogin_Success(t *testing.T) {
-	var (
-		numRequests  = 0
-		testLogin    = uuid.NewString()
-		testPassword = uuid.NewString()
-		testUID      = rand.Int()
-		testSID      = uuid.NewString()
-	)
-
+func TestSession_CreateGenericModel(t *testing.T) {
+	numRequests := 0
+	uuidGenerator = func() string {
+		return "fakeID"
+	}
 	odooMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		numRequests++
-		assert.Equal(t, "/web/session/authenticate", r.RequestURI)
+		assert.Equal(t, "/web/dataset/call_kw/create", r.RequestURI)
 
-		b, err := ioutil.ReadAll(r.Body)
-		require.NoError(t, err)
-		body := string(b)
-		assert.Contains(t, body, `"db":"TestDB"`)
-		assert.Contains(t, body, `"login":"`+testLogin+`"`)
-		assert.Contains(t, body, `"password":"`+testPassword+`"`)
+		buf, err := ioutil.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.JSONEq(t, `{
+			"id":"fakeID",
+			"jsonrpc":"2.0",
+			"method":"call",
+			"params":{
+				"model":"model",
+				"method":"create",
+				"args":[					
+					"data"
+				],
+				"kwargs":{}
+			}}`, string(buf))
 
 		w.Header().Set("content-type", "application/json")
 		_, err = w.Write([]byte(`{
-			"id": "1337",
 			"jsonrpc": "2.0",
-			"result": {
-				"company_id": 1,
-				"db": "TestDB",
-				"session_id": "` + testSID + `",
-				"uid": ` + strconv.Itoa(testUID) + `,
-				"user_context": {
-					"lang": "en_US",
-					"tz": "Europe/Zurich",
-					"uid": ` + strconv.Itoa(testUID) + `
-				},
-				"username": "` + testLogin + `"
-			}
+			"id": "fakeID",
+			"result": 221
 		}`))
 		require.NoError(t, err)
 	}))
 	defer odooMock.Close()
 
-	// Login
-	client := NewClient(odooMock.URL, "TestDB")
-	client.UseDebugLogger(true)
-	session, err := client.Login(newTestContext(t), testLogin, testPassword)
+	// Do request
+	client, err := NewClient(odooMock.URL, "TestDB")
 	require.NoError(t, err)
-	assert.Equal(t, testUID, session.UID)
-	assert.Equal(t, testSID, session.SessionID)
+	client.UseDebugLogger(true)
+	session := Session{client: client}
+	m := NewCreateModel("model", "data")
+	result, err := session.CreateGenericModel(newTestContext(t), &Session{}, m)
+	require.NoError(t, err)
+	assert.Equal(t, 221, result)
 	assert.Equal(t, 1, numRequests)
 }
 
-func TestLogin_BadCredentials(t *testing.T) {
-	var (
-		numRequests  = 0
-		testLogin    = uuid.NewString()
-		testPassword = uuid.NewString()
-		testSID      = uuid.NewString()
-	)
-
+func TestSession_UpdateGenericModel(t *testing.T) {
+	numRequests := 0
+	uuidGenerator = func() string {
+		return "fakeID"
+	}
 	odooMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		numRequests++
-		assert.Equal(t, "/web/session/authenticate", r.RequestURI)
+		assert.Equal(t, "/web/dataset/call_kw/write", r.RequestURI)
+
+		buf, err := ioutil.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.JSONEq(t, `{
+			"id":"fakeID",
+			"jsonrpc":"2.0",
+			"method":"call",
+			"params":{
+				"model":"model",
+				"method":"write",
+				"args":[
+					[1],
+					"data"
+				],
+				"kwargs":{}
+			}}`, string(buf))
+
 		w.Header().Set("content-type", "application/json")
-		_, err := w.Write([]byte(`{
-			"id": "1337",
+		_, err = w.Write([]byte(`{
 			"jsonrpc": "2.0",
-			"result": {
-				"company_id": null,
-				"db": "TestDB",
-				"session_id": "` + testSID + `",
-				"uid": false,
-				"user_context": {},
-				"username": "` + testLogin + `"
-			}
+			"id": "fakeID",
+			"result": true
 		}`))
 		require.NoError(t, err)
 	}))
 	defer odooMock.Close()
 
 	// Do request
-	client := NewClient(odooMock.URL, "TestDB")
+	client, err := NewClient(odooMock.URL, "TestDB")
+	require.NoError(t, err)
 	client.UseDebugLogger(true)
-	session, err := client.Login(newTestContext(t), testLogin, testPassword)
-	require.EqualError(t, err, "invalid credentials")
-	assert.Nil(t, session)
+	session := Session{client: client}
+	m, err := NewUpdateModel("model", 1, "data")
+	require.NoError(t, err)
+	result, err := session.UpdateGenericModel(newTestContext(t), &Session{}, m)
+	require.NoError(t, err)
+	assert.True(t, result)
 	assert.Equal(t, 1, numRequests)
 }
 
-func TestLogin_BadResponse(t *testing.T) {
+func TestSession_DeleteGenericModel(t *testing.T) {
 	numRequests := 0
+	uuidGenerator = func() string {
+		return "fakeID"
+	}
 	odooMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		numRequests++
+		assert.Equal(t, "/web/dataset/call_kw/unlink", r.RequestURI)
+
+		buf, err := ioutil.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.JSONEq(t, `{
+			"id":"fakeID",
+			"jsonrpc":"2.0",
+			"method":"call",
+			"params":{
+				"model":"model",
+				"method":"unlink",
+				"args":[[100]],
+				"kwargs":{}
+			}}`, string(buf))
 
 		w.Header().Set("content-type", "application/json")
-		_, err := w.Write([]byte(`{
+		_, err = w.Write([]byte(`{
 			"jsonrpc": "2.0",
-			"id": "xxx",
-			"error": {
-			  "message": "Odoo Server Error",
-			  "code": 200,
-			  "data": {
-				"debug": "Traceback xxx",
-				"message": "",
-				"name": "werkzeug.exceptions.Foo",
-				"arguments": []
-			  }
-			}
-		  }`))
+			"id": "fakeID",
+			"result": true
+		}`))
 		require.NoError(t, err)
 	}))
 	defer odooMock.Close()
 
 	// Do request
-	client := NewClient(odooMock.URL, "TestDB")
+	client, err := NewClient(odooMock.URL, "TestDB")
+	require.NoError(t, err)
 	client.UseDebugLogger(true)
-	session, err := client.Login(newTestContext(t), "", "")
-	require.EqualError(t, err, "error from Odoo: &{Odoo Server Error 200 map[arguments:[] debug:Traceback xxx message: name:werkzeug.exceptions.Foo]}")
-	assert.Nil(t, session)
+	session := Session{client: client}
+	m, err := NewDeleteModel("model", []int{100})
+	require.NoError(t, err)
+	result, err := session.DeleteGenericModel(newTestContext(t), &Session{}, m)
+	require.NoError(t, err)
+	assert.True(t, result)
 	assert.Equal(t, 1, numRequests)
 }

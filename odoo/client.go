@@ -2,8 +2,8 @@ package odoo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,11 +17,11 @@ type Client struct {
 }
 
 // NewClient returns a new client with its basic fields set.
-// It panics if baseURL is not parseable with url.Parse.
-func NewClient(baseURL, db string) *Client {
+// It returns error if baseURL is not parseable with url.Parse.
+func NewClient(baseURL, db string) (*Client, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
-		panic(fmt.Errorf("proper URL format is required: %w", err))
+		return nil, fmt.Errorf("proper URL format is required: %w", err)
 	}
 	return &Client{
 		parsedURL: u,
@@ -29,81 +29,70 @@ func NewClient(baseURL, db string) *Client {
 		http: &http.Client{
 			Timeout: 10 * time.Second,
 			Jar:     nil, // don't save any cookies!
-		}}
+		}}, nil
 }
 
-// SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
-// Depending on the JSON fields returned a custom json.Unmarshaler needs to be written since Odoo sets undefined fields to `false` instead of null.
-func (c Client) SearchGenericModel(ctx context.Context, session *Session, model SearchReadModel, into interface{}) error {
-	return c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/search_read", model, into)
+type loginParams struct {
+	DB       string `json:"db,omitempty"`
+	Login    string `json:"login,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
-// CreateGenericModel accepts a WriteModel as a payload and executes a query to create the new data record.
-func (c Client) CreateGenericModel(ctx context.Context, session *Session, model WriteModel) (int, error) {
-	if model.KWArgs == nil {
-		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
-	}
-	resultID := 0
-	err := c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/call_kw/create", model, &resultID)
-	return resultID, err
-}
-
-// UpdateGenericModel accepts a WriteModel as a payload and executes a query to update an existing data record.
-func (c Client) UpdateGenericModel(ctx context.Context, session *Session, model WriteModel) (bool, error) {
-	if model.KWArgs == nil {
-		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
-	}
-	updated := false
-	err := c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/call_kw/write", model, &updated)
-	return updated, err
-}
-
-// DeleteGenericModel accepts a WriteModel as a payload and executes a query to delete an existing data record.
-// For the query to succeed it is required that the Model sets an ID.
-func (c Client) DeleteGenericModel(ctx context.Context, session *Session, model WriteModel) (bool, error) {
-	if model.KWArgs == nil {
-		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
-	}
-	deleted := false
-	err := c.executeGenericRequest(ctx, session, c.parsedURL.String()+"/web/dataset/call_kw/unlink", model, &deleted)
-	return deleted, err
-}
-
-func (c Client) executeGenericRequest(ctx context.Context, session *Session, url string, model interface{}, into interface{}) error {
-	body, err := NewJSONRPCRequest(&model).Encode()
+// Login tries to authenticate the user against Odoo.
+// It returns a session if authentication was successful. An error is returned if
+//  - the credentials were wrong,
+//  - encoding or sending the request,
+//  - or decoding the request failed.
+func (c Client) Login(ctx context.Context, login, password string) (*Session, error) {
+	resp, err := c.requestSession(ctx, login, password)
 	if err != nil {
-		return newEncodingRequestError(err)
+		return nil, err
 	}
 
-	// Create request
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
-	if err != nil {
-		return newCreatingRequestError(err)
-	}
-	req.Header.Set("content-type", "application/json")
-	req.Header.Set("cookie", "session_id="+session.SessionID)
-
-	resp, err := c.sendRequest(req)
-	if err != nil {
-		return err
-	}
-	return c.unmarshalResponse(resp.Body, into)
+	return c.decodeSession(resp)
 }
 
-func (c *Client) sendRequest(req *http.Request) (*http.Response, error) {
-	res, err := c.http.Do(req)
+func (c Client) requestSession(ctx context.Context, login string, password string) (*http.Response, error) {
+	// Prepare request
+	body, err := NewJSONRPCRequest(loginParams{c.db, login, password}).Encode()
 	if err != nil {
-		return nil, fmt.Errorf("sending HTTP request: %w", err)
-	} else if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("expected HTTP status 200 OK, got %s", res.Status)
+		return nil, newEncodingRequestError(err)
 	}
-	return res, nil
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.parsedURL.String()+"/web/session/authenticate", body)
+	if err != nil {
+		return nil, newCreatingRequestError(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send request
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("login: sending HTTP request: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("login: expected HTTP status 200 OK, got %s", resp.Status)
+	}
+	return resp, nil
 }
 
-func (c *Client) unmarshalResponse(body io.ReadCloser, into interface{}) error {
-	defer body.Close()
-	if err := DecodeResult(body, into); err != nil {
-		return fmt.Errorf("decoding result: %w", err)
+func (c *Client) decodeSession(res *http.Response) (*Session, error) {
+	// Decode response
+	// We don't use DecodeResult here because we're interested in whether unmarshalling the result failed.
+	// If so, this is likely because "uid" is set to `false` which indicates an authentication failure.
+	var response JSONRPCResponse
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("login: decode response: %w", err)
 	}
-	return nil
+	if response.Error != nil {
+		return nil, fmt.Errorf("error from Odoo: %v", response.Error)
+	}
+
+	// Decode session
+	var session Session
+	if err := json.Unmarshal(*response.Result, &session); err != nil {
+		// UID is not set, authentication failed
+		return nil, ErrInvalidCredentials
+	}
+	session.client = c
+	return &session, nil
 }
