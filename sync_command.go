@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/urfave/cli/v2"
 	"github.com/vshn/appuio-odoo-adapter/odoo"
+	"github.com/vshn/appuio-odoo-adapter/odoo/model"
 )
 
 type syncCommand struct {
@@ -59,6 +60,9 @@ func (c *syncCommand) execute(context *cli.Context) error {
 		return err
 	}
 	log.Info("Login succeeded", "uid", session.UID)
+	models := model.NewOdoo(session, client)
+	category, err := models.FetchCategoryByID(odooCtx, 221)
+	log.Info("Fetched category", "category", category)
 	return err
 }
 
