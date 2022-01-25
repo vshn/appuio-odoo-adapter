@@ -25,64 +25,89 @@ type Session struct {
 
 // SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
 // Depending on the JSON fields returned a custom json.Unmarshaler needs to be written since Odoo sets undefined fields to `false` instead of null.
-func (c *Session) SearchGenericModel(ctx context.Context, model SearchReadModel, into interface{}) error {
-	return c.executeGenericRequest(ctx, c.client.parsedURL.String()+"/web/dataset/search_read", model, into)
+func (s *Session) SearchGenericModel(ctx context.Context, model SearchReadModel, into interface{}) error {
+	return s.ExecuteQuery(ctx, "/web/dataset/search_read", model, into)
 }
 
 // CreateGenericModel accepts a WriteModel as a payload and executes a query to create the new data record.
-func (c *Session) CreateGenericModel(ctx context.Context, model WriteModel) (int, error) {
-	if model.KWArgs == nil {
-		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
+func (s *Session) CreateGenericModel(ctx context.Context, model string, data interface{}) (int, error) {
+	payload := WriteModel{
+		Model:  model,
+		Method: MethodCreate,
+		Args:   []interface{}{data},
+		KWArgs: map[string]interface{}{}, // set to non-null when serializing
 	}
 	resultID := 0
-	err := c.executeGenericRequest(ctx, c.client.parsedURL.String()+"/web/dataset/call_kw/create", model, &resultID)
+	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/create", payload, &resultID)
 	return resultID, err
 }
 
 // UpdateGenericModel accepts a WriteModel as a payload and executes a query to update an existing data record.
-func (c *Session) UpdateGenericModel(ctx context.Context, model WriteModel) (bool, error) {
-	if model.KWArgs == nil {
-		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
+func (s *Session) UpdateGenericModel(ctx context.Context, model string, id int, data interface{}) (bool, error) {
+	if id == 0 {
+		return false, fmt.Errorf("id cannot be zero: %v", data)
+	}
+	payload := WriteModel{
+		Model:  model,
+		Method: MethodWrite,
+		Args: []interface{}{
+			[]int{id},
+			data,
+		},
+		KWArgs: map[string]interface{}{}, // set to non-null when serializing
 	}
 	updated := false
-	err := c.executeGenericRequest(ctx, c.client.parsedURL.String()+"/web/dataset/call_kw/write", model, &updated)
+	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/write", payload, &updated)
 	return updated, err
 }
 
-// DeleteGenericModel accepts a WriteModel as a payload and executes a query to delete an existing data record.
-// For the query to succeed it is required that the Model sets an ID.
-func (c *Session) DeleteGenericModel(ctx context.Context, model WriteModel) (bool, error) {
-	if model.KWArgs == nil {
-		model.KWArgs = map[string]interface{}{} // set to non-null when serializing
+// DeleteGenericModel accepts a model identifier and data records IDs as payload and executes a query to delete multiple existing data records.
+// At least one ID is required.
+// It returns true if the deletion query was successful.
+func (s *Session) DeleteGenericModel(ctx context.Context, model string, ids []int) (bool, error) {
+	if len(ids) == 0 {
+		return false, fmt.Errorf("slice of ID(s) is required")
+	}
+	for i, id := range ids {
+		if id == 0 {
+			return false, fmt.Errorf("id cannot be zero (index: %d)", i)
+		}
+	}
+	payload := WriteModel{
+		Model:  model,
+		Method: MethodDelete,
+		Args:   []interface{}{ids},
+		KWArgs: map[string]interface{}{}, // set to non-null when serializing
 	}
 	deleted := false
-	err := c.executeGenericRequest(ctx, c.client.parsedURL.String()+"/web/dataset/call_kw/unlink", model, &deleted)
+	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/unlink", payload, &deleted)
 	return deleted, err
 }
 
-func (c *Session) executeGenericRequest(ctx context.Context, url string, model interface{}, into interface{}) error {
+// ExecuteQuery runs a generic JSONRPC query with the given model as payload and deserializes the response.
+func (s *Session) ExecuteQuery(ctx context.Context, path string, model interface{}, into interface{}) error {
 	body, err := NewJSONRPCRequest(&model).Encode()
 	if err != nil {
 		return newEncodingRequestError(err)
 	}
 
 	// Create request
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.client.parsedURL.String()+path, body)
 	if err != nil {
 		return newCreatingRequestError(err)
 	}
 	req.Header.Set("content-type", "application/json")
-	req.Header.Set("cookie", "session_id="+c.SessionID)
+	req.Header.Set("cookie", "session_id="+s.SessionID)
 
-	resp, err := c.sendRequest(req)
+	resp, err := s.sendRequest(req)
 	if err != nil {
 		return err
 	}
-	return c.unmarshalResponse(resp.Body, into)
+	return s.unmarshalResponse(resp.Body, into)
 }
 
-func (c *Session) sendRequest(req *http.Request) (*http.Response, error) {
-	res, err := c.client.http.Do(req)
+func (s *Session) sendRequest(req *http.Request) (*http.Response, error) {
+	res, err := s.client.http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("sending HTTP request: %w", err)
 	} else if res.StatusCode != http.StatusOK {
@@ -91,7 +116,7 @@ func (c *Session) sendRequest(req *http.Request) (*http.Response, error) {
 	return res, nil
 }
 
-func (c *Session) unmarshalResponse(body io.ReadCloser, into interface{}) error {
+func (s *Session) unmarshalResponse(body io.ReadCloser, into interface{}) error {
 	defer body.Close()
 	if err := DecodeResult(body, into); err != nil {
 		return fmt.Errorf("decoding result: %w", err)

@@ -1,7 +1,5 @@
 package odoo
 
-import "fmt"
-
 // SearchReadModel is used as "params" in requests to "dataset/search_read" endpoints.
 type SearchReadModel struct {
 	Model  string   `json:"model,omitempty"`
@@ -29,7 +27,7 @@ const (
 	MethodDelete Method = "unlink"
 )
 
-// WriteModel is used as "params" in requests to "dataset/create" or "dataset/write" endpoints.
+// WriteModel is used as "params" in requests to "dataset/create", "dataset/write" or "dataset/unlinke" endpoints.
 type WriteModel struct {
 	Model  string `json:"model"`
 	Method Method `json:"method"`
@@ -45,48 +43,4 @@ type WriteModel struct {
 	// KWArgs is an additional object required to be non-nil, otherwise the request simply fails.
 	// In most cases it's enough to set it to `map[string]interface{}{}`.
 	KWArgs map[string]interface{} `json:"kwargs"`
-}
-
-// NewCreateModel returns a new WriteModel for creating new data records.
-func NewCreateModel(model string, data interface{}) WriteModel {
-	return WriteModel{
-		KWArgs: map[string]interface{}{},
-		Method: MethodCreate,
-		Model:  model,
-		Args:   []interface{}{data},
-	}
-}
-
-// NewUpdateModel returns a new WriteModel for updating existing data records.
-func NewUpdateModel(model string, id int, data interface{}) (WriteModel, error) {
-	if id == 0 {
-		return WriteModel{}, fmt.Errorf("ID cannot be zero for model: %v", data)
-	}
-	return WriteModel{
-		KWArgs: map[string]interface{}{},
-		Method: MethodWrite,
-		Model:  model,
-		Args: []interface{}{
-			[]int{id},
-			data,
-		},
-	}, nil
-}
-
-// NewDeleteModel returns a new WriteModel for deleting existing data records.
-func NewDeleteModel(model string, ids []int) (WriteModel, error) {
-	if len(ids) == 0 {
-		return WriteModel{}, fmt.Errorf("slice of ID(s) is required")
-	}
-	for i, id := range ids {
-		if id == 0 {
-			return WriteModel{}, fmt.Errorf("id cannot be zero (index: %d)", i)
-		}
-	}
-	return WriteModel{
-		KWArgs: map[string]interface{}{},
-		Method: MethodDelete,
-		Model:  model,
-		Args:   []interface{}{ids},
-	}, nil
 }

@@ -20,26 +20,18 @@ type InvoiceCategory struct {
 // CreateInvoiceCategory creates a new invoice category and returns the ID of the data record.
 // Note that setting InvoiceCategory.ID in the payload doesn't have an effect.
 func (o Odoo) CreateInvoiceCategory(ctx context.Context, category InvoiceCategory) (int, error) {
-	return o.session.CreateGenericModel(ctx, odoo.NewCreateModel("sale_layout.category", category))
+	return o.session.CreateGenericModel(ctx, "sale_layout.category", category)
 }
 
 // UpdateInvoiceCategory updates a given invoice category and returns true if the data record has been updated.
 func (o Odoo) UpdateInvoiceCategory(ctx context.Context, category InvoiceCategory) (bool, error) {
-	m, err := odoo.NewUpdateModel("sale_layout.category", category.ID, category)
-	if err != nil {
-		return false, err
-	}
-	return o.session.UpdateGenericModel(ctx, m)
+	return o.session.UpdateGenericModel(ctx, "sale_layout.category", category.ID, category)
 }
 
 // DeleteInvoiceCategory updates a given invoice category and returns true if the data record has been updated.
 // For all existing invoices, the "section" field of all affected line items become empty.
 func (o Odoo) DeleteInvoiceCategory(ctx context.Context, category InvoiceCategory) (bool, error) {
-	m, err := odoo.NewDeleteModel("sale_layout.category", []int{category.ID})
-	if err != nil {
-		return false, err
-	}
-	return o.session.DeleteGenericModel(ctx, m)
+	return o.session.DeleteGenericModel(ctx, "sale_layout.category", []int{category.ID})
 }
 
 // FetchInvoiceCategoryByID searches for the invoice category by ID and returns the first entry in the result.
