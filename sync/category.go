@@ -9,14 +9,16 @@ import (
 )
 
 // SyncCategory synchronizes model.InvoiceCategory in Odoo based on the given db.Category according to the following rules:
-//  * If db.Category.Target is NULL then it will convert and create a new model.InvoiceCategory and set db.Category.Target to the ID returned by Odoo.
+//  * If db.Category.Target is NULL then it will search for an existing category that matches the name:
+//    * If not found, it will create a new model.InvoiceCategory and set db.Category.Target to the ID returned by Odoo.
+//    * If found a match, it will use the model.InvoiceCategory and set db.Category.Target to the ID returned by Odoo.
 //  * If db.Category.Target has a value then it will search for a matching model.InvoiceCategory:
 //    * If not found, it will recreate the model.InvoiceCategory.
 //    * If found and model.InvoiceCategory.Name is up-to-date, it will return without error
 //    * If found and model.InvoiceCategory.Name differs from db.Category.Source, the model.InvoiceCategory is updated/reset.
 func (s *OdooSyncer) SyncCategory(ctx context.Context, category *db.Category) error {
 	if !category.Target.Valid {
-		return s.createCategoryInOdoo(ctx, category)
+		return s.findOrCreateCategory(ctx, category)
 	}
 	ic := model.InvoiceCategory{}
 	err := CategoryConverter{}.ToInvoiceCategory(category, &ic)
@@ -25,6 +27,23 @@ func (s *OdooSyncer) SyncCategory(ctx context.Context, category *db.Category) er
 	}
 
 	return s.updateCategoryIfNeeded(ctx, category, ic)
+}
+
+func (s *OdooSyncer) findOrCreateCategory(ctx context.Context, category *db.Category) error {
+	ic := model.InvoiceCategory{}
+	err := CategoryConverter{}.ToInvoiceCategory(category, &ic)
+	if err != nil {
+		return err
+	}
+	found, err := s.odoo.SearchInvoiceCategoriesByName(ctx, ic.Name)
+	if err != nil {
+		return err
+	}
+	if len(found) == 0 {
+		return s.createCategoryInOdoo(ctx, category)
+	}
+	category.Target.String, category.Target.Valid = strconv.Itoa(found[0].ID), true
+	return nil
 }
 
 func (s *OdooSyncer) createCategoryInOdoo(ctx context.Context, category *db.Category) error {

@@ -20,9 +20,14 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 		expectedDBCategory *db.Category
 		expectedError      string
 	}{
-		"GivenCategoryNotExistingInOdoo_WhenCreating_ThenExpectCreatedCategoryAndUpdateID": {
+		"GivenCategoryNotExistingInOdoo_WhenCreating_ThenExpectCreatedCategoryAndUpdateTarget": {
 			givenDBCategory: &db.Category{Source: "zone:namespace"},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
+				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{}}
+				mock.EXPECT().
+					SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
+					SetArg(2, result).
+					Return(nil)
 				mock.EXPECT().
 					CreateGenericModel(gomock.Any(), gomock.Any(), model.InvoiceCategory{
 						Name:     fmt.Sprintf("%sZone: zone - Namespace: namespace", invoiceCategoryNamePrefix),
@@ -34,6 +39,19 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 				Source: "zone:namespace",
 				Target: sql.NullString{String: "12", Valid: true},
 			},
+		},
+		"GivenCategoryExistsInOdoo_WhenTargetIsNull_ThenSearchAndUpdateTarget": {
+			givenDBCategory: &db.Category{Source: "zone:namespace"},
+			mockSetup: func(mock *odoomock.MockQueryExecutor) {
+				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{
+					{ID: 12, Name: fmt.Sprintf("%sZone: zone - Namespace: namespace", invoiceCategoryNamePrefix)},
+				}}
+				mock.EXPECT().
+					SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
+					SetArg(2, result).
+					Return(nil)
+			},
+			expectedDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
 		},
 		"GivenCategoryExistsInOdoo_WhenPropertiesAreUpToDate_ThenDoNothing": {
 			givenDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
