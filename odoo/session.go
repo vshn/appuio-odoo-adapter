@@ -13,6 +13,8 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
+//go:generate go run github.com/golang/mock/mockgen -destination=./odoomock/$GOFILE -package odoomock github.com/vshn/appuio-odoo-adapter/odoo QueryExecutor
+
 // QueryExecutor runs queries against Odoo API.
 type QueryExecutor interface {
 	// SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
