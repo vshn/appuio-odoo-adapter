@@ -21,7 +21,7 @@ If there are line items with sections defined, the rendering of an invoice is in
 
 === Unique Sequence Numbers
 
-If no two categories in an invoice share the same sequence number, then each line item gets grouped together when rendered in a PDF regardless of their position in the invoice data record. However, the ordering of the line items _within_ the same category is still determined by the ordering in the invoice record.
+If no two categories in an invoice share the same sequence number, then each line item gets grouped together regardless of their position in the invoice data record. However, the ordering of the line items _within_ the same category is still determined by the ordering in the invoice record.
 
 .Sections with unique sequence numbers
 [example]
@@ -31,8 +31,8 @@ image:invoice-unique-sequence.png[]
 
 === Shared Sequence Numbers
 
-If two categories in an invoice share the same sequence number, then line items only get grouped together when rendered in a PDF when they are sequentially ordered in the invoice data record.
-That means that line items may become distributed with their sections displayed multiple times.
+If two categories in an invoice share the same sequence number, then line items only get grouped together if they are sequentially ordered in the invoice data record.
+Without sequential ordering line items may become spread across the invoice with their sections displayed multiple times.
 
 In the example below all categories share the same sequence number.
 The line items within the `test-category with subtotal` are grouped together since they are positioned next to each other in the invoice data record.
