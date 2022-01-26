@@ -43,9 +43,9 @@ func (s *Session) CreateGenericModel(ctx context.Context, model string, data int
 }
 
 // UpdateGenericModel accepts a WriteModel as a payload and executes a query to update an existing data record.
-func (s *Session) UpdateGenericModel(ctx context.Context, model string, id int, data interface{}) (bool, error) {
+func (s *Session) UpdateGenericModel(ctx context.Context, model string, id int, data interface{}) error {
 	if id == 0 {
-		return false, fmt.Errorf("id cannot be zero: %v", data)
+		return fmt.Errorf("id cannot be zero: %v", data)
 	}
 	payload := WriteModel{
 		Model:  model,
@@ -58,19 +58,19 @@ func (s *Session) UpdateGenericModel(ctx context.Context, model string, id int, 
 	}
 	updated := false
 	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/write", payload, &updated)
-	return updated, err
+	return err
 }
 
 // DeleteGenericModel accepts a model identifier and data records IDs as payload and executes a query to delete multiple existing data records.
 // At least one ID is required.
 // It returns true if the deletion query was successful.
-func (s *Session) DeleteGenericModel(ctx context.Context, model string, ids []int) (bool, error) {
+func (s *Session) DeleteGenericModel(ctx context.Context, model string, ids []int) error {
 	if len(ids) == 0 {
-		return false, fmt.Errorf("slice of ID(s) is required")
+		return fmt.Errorf("slice of ID(s) is required")
 	}
 	for i, id := range ids {
 		if id == 0 {
-			return false, fmt.Errorf("id cannot be zero (index: %d)", i)
+			return fmt.Errorf("id cannot be zero (index: %d)", i)
 		}
 	}
 	payload := WriteModel{
@@ -81,7 +81,7 @@ func (s *Session) DeleteGenericModel(ctx context.Context, model string, ids []in
 	}
 	deleted := false
 	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/unlink", payload, &deleted)
-	return deleted, err
+	return err
 }
 
 // ExecuteQuery runs a generic JSONRPC query with the given model as payload and deserializes the response.

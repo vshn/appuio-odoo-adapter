@@ -49,7 +49,10 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	_ = LogMetadata(context)
 	log := AppLogger(context).WithName(syncCommandName)
 
-	client, _ := odoo.NewClient(c.OdooURL, c.OdooDB)
+	client, err := odoo.NewClient(c.OdooURL, c.OdooDB)
+	if err != nil {
+		return err
+	}
 	client.UseDebugLogger(context.Bool("debug"))
 	log.V(1).Info("Logging in to Odoo...", "url", c.OdooURL, "db", c.OdooDB)
 
@@ -63,32 +66,31 @@ func (c *syncCommand) execute(context *cli.Context) error {
 
 	// Demo
 	models := model.NewOdoo(session)
-	newCategory := model.InvoiceCategory{
+	createCategory := model.InvoiceCategory{
 		Name:      "test-category-odoo-adapter",
 		Sequence:  10,
 		Separator: true,
 		SubTotal:  true,
 	}
 
-	newId, err := models.CreateInvoiceCategory(odooCtx, newCategory)
+	newCategory, err := models.CreateInvoiceCategory(odooCtx, createCategory)
 	c.logIfErr(log, err)
-	newCategory.ID = newId
 	log.Info("Created new category", "category", newCategory)
 
-	category, err := models.FetchInvoiceCategoryByID(odooCtx, newId)
+	category, err := models.FetchInvoiceCategoryByID(odooCtx, newCategory.ID)
 	log.Info("Fetched category", "category", category)
 
 	newCategory.Sequence = 20
-	updated, err := models.UpdateInvoiceCategory(odooCtx, newCategory)
+	err = models.UpdateInvoiceCategory(odooCtx, newCategory)
 	c.logIfErr(log, err)
-	log.Info("Updated category", "category", newCategory, "updated", updated)
+	log.Info("Updated category", "category", newCategory)
 
 	list, err := models.SearchInvoiceCategoriesByName(odooCtx, "odoo-adapter")
 	c.logIfErr(log, err)
 	log.Info("Fetched list", "list", list)
 
-	deleted, err := models.DeleteInvoiceCategory(odooCtx, newCategory)
-	log.Info("Deleted new category", "category", newCategory, "deleted?", deleted)
+	err = models.DeleteInvoiceCategory(odooCtx, newCategory)
+	log.Info("Deleted new category", "category", newCategory)
 	c.logIfErr(log, err)
 
 	return nil

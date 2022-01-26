@@ -95,9 +95,8 @@ func TestSession_UpdateGenericModel(t *testing.T) {
 	require.NoError(t, err)
 	client.UseDebugLogger(true)
 	session := Session{client: client}
-	result, err := session.UpdateGenericModel(newTestContext(t), "model", 1, "data")
+	err = session.UpdateGenericModel(newTestContext(t), "model", 1, "data")
 	require.NoError(t, err)
-	assert.True(t, result)
 	assert.Equal(t, 1, numRequests)
 }
 
@@ -138,8 +137,7 @@ func TestSession_DeleteGenericModel(t *testing.T) {
 	require.NoError(t, err)
 	client.UseDebugLogger(true)
 	session := Session{client: client}
-	result, err := session.DeleteGenericModel(newTestContext(t), "model", []int{100})
+	err = session.DeleteGenericModel(newTestContext(t), "model", []int{100})
 	require.NoError(t, err)
-	assert.True(t, result)
 	assert.Equal(t, 1, numRequests)
 }
