@@ -9,7 +9,7 @@ import (
 )
 
 // SyncCategory synchronizes model.InvoiceCategory in Odoo based on the given db.Category according to the following rules:
-//  * If db.Category.Target is NULL then it will convert and create a model.InvoiceCategory and set db.Category.Target to the ID returned by Odoo.
+//  * If db.Category.Target is NULL then it will convert and create a new model.InvoiceCategory and set db.Category.Target to the ID returned by Odoo.
 //  * If db.Category.Target has a value then it will search for a matching model.InvoiceCategory:
 //    * If not found, it will recreate the model.InvoiceCategory.
 //    * If found and model.InvoiceCategory.Name is up-to-date, it will return without error

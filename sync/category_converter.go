@@ -71,6 +71,9 @@ func (c CategoryConverter) FromInvoiceCategory(category model.InvoiceCategory, i
 	return nil
 }
 
+// IsSame returns true if the given entities are considered the same.
+// The entities are considered same if db.Category.Target and db.Category.Source are equal in values.
+// Any errors result in false.
 func (c CategoryConverter) IsSame(odoo model.InvoiceCategory, dbCat *db.Category) bool {
 	copied := db.Category{
 		Source: dbCat.Source,
