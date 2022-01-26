@@ -25,6 +25,8 @@ type JSONRPCRequest struct {
 	Params interface{} `json:"params,omitempty"`
 }
 
+var uuidGenerator = uuid.NewString
+
 // NewJSONRPCRequest returns a JSON RPC request with its protocol fields populated:
 //
 // * "id" will be set to a random UUID
@@ -33,7 +35,7 @@ type JSONRPCRequest struct {
 // * "params" will be set to whatever was passed in
 func NewJSONRPCRequest(params interface{}) *JSONRPCRequest {
 	return &JSONRPCRequest{
-		ID:      uuid.NewString(),
+		ID:      uuidGenerator(),
 		JSONRPC: "2.0",
 		Method:  "call",
 		Params:  params,
@@ -82,4 +84,12 @@ func DecodeResult(buf io.Reader, result interface{}) error {
 	}
 
 	return json.Unmarshal(*res.Result, result)
+}
+
+func newEncodingRequestError(err error) error {
+	return fmt.Errorf("encoding request: %w", err)
+}
+
+func newCreatingRequestError(err error) error {
+	return fmt.Errorf("creating request: %w", err)
 }

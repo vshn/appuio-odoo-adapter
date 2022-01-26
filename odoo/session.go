@@ -2,9 +2,9 @@ package odoo
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -15,74 +15,111 @@ var (
 
 // Session information
 type Session struct {
-	// ID is the session ID.
+	// SessionID is the session SessionID.
 	// Is always set, no matter the authentication outcome.
-	ID string `json:"session_id,omitempty"`
+	SessionID string `json:"session_id,omitempty"`
 	// UID is the user's ID as an int, or the boolean `false` if authentication failed.
-	UID int `json:"uid,omitempty"`
+	UID    int `json:"uid,omitempty"`
+	client *Client
 }
 
-type loginParams struct {
-	DB       string `json:"db,omitempty"`
-	Login    string `json:"login,omitempty"`
-	Password string `json:"password,omitempty"`
+// SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
+// Depending on the JSON fields returned a custom json.Unmarshaler needs to be written since Odoo sets undefined fields to `false` instead of null.
+func (s *Session) SearchGenericModel(ctx context.Context, model SearchReadModel, into interface{}) error {
+	return s.ExecuteQuery(ctx, "/web/dataset/search_read", model, into)
 }
 
-// Login tries to authenticate the user against Odoo.
-// It returns a session if authentication was successful. An error is returned if
-//  - the credentials were wrong,
-//  - encoding or sending the request,
-//  - or decoding the request failed.
-func (c Client) Login(ctx context.Context, login, password string) (*Session, error) {
-	resp, err := c.requestSession(ctx, login, password)
-	if err != nil {
-		return nil, err
+// CreateGenericModel accepts a WriteModel as a payload and executes a query to create the new data record.
+func (s *Session) CreateGenericModel(ctx context.Context, model string, data interface{}) (int, error) {
+	payload := WriteModel{
+		Model:  model,
+		Method: MethodCreate,
+		Args:   []interface{}{data},
+		KWArgs: map[string]interface{}{}, // set to non-null when serializing
 	}
-
-	return c.decodeSession(resp)
+	resultID := 0
+	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/create", payload, &resultID)
+	return resultID, err
 }
 
-func (c Client) requestSession(ctx context.Context, login string, password string) (*http.Response, error) {
-	// Prepare request
-	body, err := NewJSONRPCRequest(loginParams{c.db, login, password}).Encode()
-	if err != nil {
-		return nil, fmt.Errorf("encoding request: %w", err)
+// UpdateGenericModel accepts a WriteModel as a payload and executes a query to update an existing data record.
+func (s *Session) UpdateGenericModel(ctx context.Context, model string, id int, data interface{}) error {
+	if id == 0 {
+		return fmt.Errorf("id cannot be zero: %v", data)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/web/session/authenticate", body)
-	if err != nil {
-		return nil, fmt.Errorf("login: building HTTP request: %w", err)
+	payload := WriteModel{
+		Model:  model,
+		Method: MethodWrite,
+		Args: []interface{}{
+			[]int{id},
+			data,
+		},
+		KWArgs: map[string]interface{}{}, // set to non-null when serializing
 	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// Send request
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("login: sending HTTP request: %w", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("login: expected HTTP status 200 OK, got %s", resp.Status)
-	}
-	return resp, nil
+	updated := false
+	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/write", payload, &updated)
+	return err
 }
 
-func (c Client) decodeSession(res *http.Response) (*Session, error) {
-	// Decode response
-	// We don't use DecodeResult here because we're interested in whether unmarshalling the result failed.
-	// If so, this is likely because "uid" is set to `false` which indicates an authentication failure.
-	var response JSONRPCResponse
-	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("login: decode response: %w", err)
+// DeleteGenericModel accepts a model identifier and data records IDs as payload and executes a query to delete multiple existing data records.
+// At least one ID is required.
+// It returns true if the deletion query was successful.
+func (s *Session) DeleteGenericModel(ctx context.Context, model string, ids []int) error {
+	if len(ids) == 0 {
+		return fmt.Errorf("slice of ID(s) is required")
 	}
-	if response.Error != nil {
-		return nil, fmt.Errorf("error from Odoo: %v", response.Error)
+	for i, id := range ids {
+		if id == 0 {
+			return fmt.Errorf("id cannot be zero (index: %d)", i)
+		}
+	}
+	payload := WriteModel{
+		Model:  model,
+		Method: MethodDelete,
+		Args:   []interface{}{ids},
+		KWArgs: map[string]interface{}{}, // set to non-null when serializing
+	}
+	deleted := false
+	err := s.ExecuteQuery(ctx, "/web/dataset/call_kw/unlink", payload, &deleted)
+	return err
+}
+
+// ExecuteQuery runs a generic JSONRPC query with the given model as payload and deserializes the response.
+func (s *Session) ExecuteQuery(ctx context.Context, path string, model interface{}, into interface{}) error {
+	body, err := NewJSONRPCRequest(&model).Encode()
+	if err != nil {
+		return newEncodingRequestError(err)
 	}
 
-	// Decode session
-	var session Session
-	if err := json.Unmarshal(*response.Result, &session); err != nil {
-		// UID is not set, authentication failed
-		return nil, ErrInvalidCredentials
+	// Create request
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.client.parsedURL.String()+path, body)
+	if err != nil {
+		return newCreatingRequestError(err)
 	}
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("cookie", "session_id="+s.SessionID)
 
-	return &session, nil
+	resp, err := s.sendRequest(req)
+	if err != nil {
+		return err
+	}
+	return s.unmarshalResponse(resp.Body, into)
+}
+
+func (s *Session) sendRequest(req *http.Request) (*http.Response, error) {
+	res, err := s.client.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("sending HTTP request: %w", err)
+	} else if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("expected HTTP status 200 OK, got %s", res.Status)
+	}
+	return res, nil
+}
+
+func (s *Session) unmarshalResponse(body io.ReadCloser, into interface{}) error {
+	defer body.Close()
+	if err := DecodeResult(body, into); err != nil {
+		return fmt.Errorf("decoding result: %w", err)
+	}
+	return nil
 }
