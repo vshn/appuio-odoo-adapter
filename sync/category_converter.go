@@ -70,3 +70,15 @@ func (c CategoryConverter) FromInvoiceCategory(category model.InvoiceCategory, i
 	into.Source = source
 	return nil
 }
+
+func (c CategoryConverter) IsSame(odoo model.InvoiceCategory, dbCat *db.Category) bool {
+	copied := db.Category{
+		Source: dbCat.Source,
+		Target: dbCat.Target,
+	}
+	err := CategoryConverter{}.FromInvoiceCategory(odoo, &copied)
+	if err != nil {
+		return false
+	}
+	return copied.Source == dbCat.Source && copied.Target.String == dbCat.Target.String
+}
