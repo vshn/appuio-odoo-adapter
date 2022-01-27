@@ -13,6 +13,24 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
+//go:generate go run github.com/golang/mock/mockgen -destination=./odoomock/$GOFILE -package odoomock github.com/vshn/appuio-odoo-adapter/odoo QueryExecutor
+
+// QueryExecutor runs queries against Odoo API.
+type QueryExecutor interface {
+	// SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
+	// Depending on the JSON fields returned a custom json.Unmarshaler needs to be written since Odoo sets undefined fields to `false` instead of null.
+	SearchGenericModel(ctx context.Context, model SearchReadModel, into interface{}) error
+	// CreateGenericModel accepts a payload and executes a query to create the new data record.
+	CreateGenericModel(ctx context.Context, model string, data interface{}) (int, error)
+	// UpdateGenericModel accepts a payload and executes a query to update an existing data record.
+	UpdateGenericModel(ctx context.Context, model string, id int, data interface{}) error
+	// DeleteGenericModel accepts a model identifier and data records IDs as payload and executes a query to delete multiple existing data records.
+	// At least one ID is required.
+	DeleteGenericModel(ctx context.Context, model string, ids []int) error
+	// ExecuteQuery runs a generic JSONRPC query with the given model as payload and deserializes the response.
+	ExecuteQuery(ctx context.Context, path string, model interface{}, into interface{}) error
+}
+
 // Session information
 type Session struct {
 	// SessionID is the session SessionID.
@@ -23,13 +41,12 @@ type Session struct {
 	client *Client
 }
 
-// SearchGenericModel accepts a SearchReadModel and unmarshal the response into the given pointer.
-// Depending on the JSON fields returned a custom json.Unmarshaler needs to be written since Odoo sets undefined fields to `false` instead of null.
+// SearchGenericModel implements QueryExecutor.
 func (s *Session) SearchGenericModel(ctx context.Context, model SearchReadModel, into interface{}) error {
 	return s.ExecuteQuery(ctx, "/web/dataset/search_read", model, into)
 }
 
-// CreateGenericModel accepts a WriteModel as a payload and executes a query to create the new data record.
+// CreateGenericModel implements QueryExecutor.
 func (s *Session) CreateGenericModel(ctx context.Context, model string, data interface{}) (int, error) {
 	payload := WriteModel{
 		Model:  model,
@@ -42,7 +59,7 @@ func (s *Session) CreateGenericModel(ctx context.Context, model string, data int
 	return resultID, err
 }
 
-// UpdateGenericModel accepts a WriteModel as a payload and executes a query to update an existing data record.
+// UpdateGenericModel implements QueryExecutor.
 func (s *Session) UpdateGenericModel(ctx context.Context, model string, id int, data interface{}) error {
 	if id == 0 {
 		return fmt.Errorf("id cannot be zero: %v", data)
@@ -61,9 +78,7 @@ func (s *Session) UpdateGenericModel(ctx context.Context, model string, id int, 
 	return err
 }
 
-// DeleteGenericModel accepts a model identifier and data records IDs as payload and executes a query to delete multiple existing data records.
-// At least one ID is required.
-// It returns true if the deletion query was successful.
+// DeleteGenericModel implements QueryExecutor.
 func (s *Session) DeleteGenericModel(ctx context.Context, model string, ids []int) error {
 	if len(ids) == 0 {
 		return fmt.Errorf("slice of ID(s) is required")
@@ -84,7 +99,7 @@ func (s *Session) DeleteGenericModel(ctx context.Context, model string, ids []in
 	return err
 }
 
-// ExecuteQuery runs a generic JSONRPC query with the given model as payload and deserializes the response.
+// ExecuteQuery implements QueryExecutor.
 func (s *Session) ExecuteQuery(ctx context.Context, path string, model interface{}, into interface{}) error {
 	body, err := NewJSONRPCRequest(&model).Encode()
 	if err != nil {
