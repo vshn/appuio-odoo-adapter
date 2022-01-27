@@ -94,11 +94,11 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 			if tc.mockSetup != nil {
 				tc.mockSetup(mock)
 			}
-			s := OdooSyncer{odoo: model.NewOdoo(mock)}
+			s := InvoiceCategoryReconciler{odoo: model.NewOdoo(mock)}
 
 			result := tc.givenDBCategory
 			tctx := newTestContext(t)
-			err := s.SyncCategory(tctx, result)
+			err := s.Reconcile(tctx, result)
 			if tc.expectedError != "" {
 				assert.EqualError(t, err, tc.expectedError)
 				return

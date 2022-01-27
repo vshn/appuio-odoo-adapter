@@ -8,7 +8,7 @@ import (
 	"github.com/vshn/appuio-odoo-adapter/odoo/model"
 )
 
-// SyncCategory synchronizes model.InvoiceCategory in Odoo based on the given db.Category according to the following rules:
+// Reconcile synchronizes model.InvoiceCategory in Odoo based on the given db.Category according to the following rules:
 //  * If db.Category.Target is NULL then it will search for an existing category that matches the name:
 //    * If not found, it will create a new model.InvoiceCategory and set db.Category.Target to the ID returned by Odoo.
 //    * If found a match, it will use the model.InvoiceCategory and set db.Category.Target to the ID returned by Odoo.
@@ -16,26 +16,20 @@ import (
 //    * If not found, it will recreate the model.InvoiceCategory.
 //    * If found and model.InvoiceCategory.Name is up-to-date, it will return without error
 //    * If found and model.InvoiceCategory.Name differs from db.Category.Source, the model.InvoiceCategory is updated/reset.
-func (s *OdooSyncer) SyncCategory(ctx context.Context, category *db.Category) error {
-	if !category.Target.Valid {
-		return s.findOrCreateCategory(ctx, category)
-	}
-	ic := model.InvoiceCategory{}
-	err := CategoryConverter{}.ToInvoiceCategory(category, &ic)
+func (s *InvoiceCategoryReconciler) Reconcile(ctx context.Context, category *db.Category) error {
+	converted := model.InvoiceCategory{}
+	err := CategoryConverter{}.ToInvoiceCategory(category, &converted)
 	if err != nil {
 		return err
 	}
-
-	return s.updateCategoryIfNeeded(ctx, category, ic)
+	if !category.Target.Valid {
+		return s.findOrCreateCategory(ctx, category, converted)
+	}
+	return s.updateCategoryIfNeeded(ctx, category, converted)
 }
 
-func (s *OdooSyncer) findOrCreateCategory(ctx context.Context, category *db.Category) error {
-	ic := model.InvoiceCategory{}
-	err := CategoryConverter{}.ToInvoiceCategory(category, &ic)
-	if err != nil {
-		return err
-	}
-	found, err := s.odoo.SearchInvoiceCategoriesByName(ctx, ic.Name)
+func (s *InvoiceCategoryReconciler) findOrCreateCategory(ctx context.Context, category *db.Category, converted model.InvoiceCategory) error {
+	found, err := s.odoo.SearchInvoiceCategoriesByName(ctx, converted.Name)
 	if err != nil {
 		return err
 	}
@@ -46,7 +40,7 @@ func (s *OdooSyncer) findOrCreateCategory(ctx context.Context, category *db.Cate
 	return nil
 }
 
-func (s *OdooSyncer) createCategoryInOdoo(ctx context.Context, category *db.Category) error {
+func (s *InvoiceCategoryReconciler) createCategoryInOdoo(ctx context.Context, category *db.Category) error {
 	ic := newInvoiceCategory(nil)
 	err := CategoryConverter{}.ToInvoiceCategory(category, &ic)
 	if err != nil {
@@ -60,7 +54,7 @@ func (s *OdooSyncer) createCategoryInOdoo(ctx context.Context, category *db.Cate
 	return nil
 }
 
-func (s *OdooSyncer) updateCategoryIfNeeded(ctx context.Context, category *db.Category, ic model.InvoiceCategory) error {
+func (s *InvoiceCategoryReconciler) updateCategoryIfNeeded(ctx context.Context, category *db.Category, ic model.InvoiceCategory) error {
 	// TODO: re Idempotency, should we search by name instead? Maybe the category in odoo got deleted & recreated with a new ID manually
 	existingIC, err := s.odoo.FetchInvoiceCategoryByID(ctx, ic.ID)
 	if err != nil {
@@ -80,7 +74,7 @@ func (s *OdooSyncer) updateCategoryIfNeeded(ctx context.Context, category *db.Ca
 	return nil
 }
 
-func (s *OdooSyncer) updateCategoryInOdoo(ctx context.Context, category *db.Category, existing *model.InvoiceCategory) error {
+func (s *InvoiceCategoryReconciler) updateCategoryInOdoo(ctx context.Context, category *db.Category, existing *model.InvoiceCategory) error {
 	ic := newInvoiceCategory(existing)
 	err := CategoryConverter{}.ToInvoiceCategory(category, &ic)
 	if err != nil {
