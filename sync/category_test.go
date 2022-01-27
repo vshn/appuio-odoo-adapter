@@ -39,6 +39,25 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 				Target: sql.NullString{String: "12", Valid: true},
 			},
 		},
+		"GivenCategoryExistsInOdoo_WhenTargetIsAlreadySet_ThenRecreateCategoryAndUpdateTarget": {
+			// This case may happen if the category got deleted in Odoo after a previous reconcile
+			givenDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
+			mockSetup: func(mock *odoomock.MockQueryExecutor) {
+				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{}}
+				mock.EXPECT().
+					SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
+					SetArg(2, result).
+					Return(nil)
+				mock.EXPECT().
+					CreateGenericModel(gomock.Any(), gomock.Any(), model.InvoiceCategory{
+						Name:     "Zone: zone - Namespace: namespace",
+						SubTotal: true,
+						ID:       12, // doesn't matter for Odoo, it will create a new ID
+					}).
+					Return(15, nil)
+			},
+			expectedDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "15", Valid: true}},
+		},
 		"GivenCategoryExistsInOdoo_WhenTargetIsNull_ThenSearchAndUpdateTarget": {
 			givenDBCategory: &db.Category{Source: "zone:namespace"},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
