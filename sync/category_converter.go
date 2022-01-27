@@ -12,12 +12,11 @@ import (
 )
 
 const (
-	invoiceCategoryNamePrefix = "APPUiO Cloud "
-	elementSeparator          = ":"
+	elementSeparator = ":"
 )
 
 // invoiceCategoryNameRegex parses a category name in the form of "prefix Zone: zone - Namespace: namespace"
-var invoiceCategoryNameRegex = regexp.MustCompile(invoiceCategoryNamePrefix + "Zone: (\\w+) - Namespace: (\\w+)")
+var invoiceCategoryNameRegex = regexp.MustCompile("Zone: (\\w+) - Namespace: (\\w+)")
 
 // CategoryConverter converts category models to and from Odoo.
 type CategoryConverter struct{}
@@ -41,7 +40,7 @@ func (c CategoryConverter) ToInvoiceCategory(category *db.Category, into *model.
 		if len(arr) < 2 {
 			return fmt.Errorf("cannot parse source: %s: expected format `cluster:namespace`", category.Source)
 		}
-		name = fmt.Sprintf("%sZone: %s - Namespace: %s", invoiceCategoryNamePrefix, arr[0], arr[1])
+		name = fmt.Sprintf("Zone: %s - Namespace: %s", arr[0], arr[1])
 	}
 	into.ID = id
 	into.Name = name

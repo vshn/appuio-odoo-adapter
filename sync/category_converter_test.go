@@ -31,7 +31,7 @@ func TestCategoryConverter_ToInvoiceCategory(t *testing.T) {
 				Source: "zone:namespace",
 			},
 			expectedCategory: model.InvoiceCategory{
-				Name: "APPUiO Cloud Zone: zone - Namespace: namespace",
+				Name: "Zone: zone - Namespace: namespace",
 			},
 		},
 		"GivenInvalidSource_ThenExpectError": {
@@ -76,7 +76,7 @@ func TestCategoryConverter_FromInvoiceCategory(t *testing.T) {
 		},
 		"GivenName_ThenConvertToSource": {
 			givenCategory: model.InvoiceCategory{
-				Name: "APPUiO Cloud Zone: zone - Namespace: namespace",
+				Name: "Zone: zone - Namespace: namespace",
 			},
 			expectedCategory: &db.Category{
 				Source: "zone:namespace",

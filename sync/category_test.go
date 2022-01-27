@@ -2,7 +2,6 @@ package sync
 
 import (
 	"database/sql"
-	"fmt"
 	"testing"
 
 	"github.com/appuio/appuio-cloud-reporting/pkg/db"
@@ -30,7 +29,7 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 					Return(nil)
 				mock.EXPECT().
 					CreateGenericModel(gomock.Any(), gomock.Any(), model.InvoiceCategory{
-						Name:     fmt.Sprintf("%sZone: zone - Namespace: namespace", invoiceCategoryNamePrefix),
+						Name:     "Zone: zone - Namespace: namespace",
 						SubTotal: true,
 					}).
 					Return(12, nil)
@@ -44,7 +43,7 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 			givenDBCategory: &db.Category{Source: "zone:namespace"},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
 				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{
-					{ID: 12, Name: fmt.Sprintf("%sZone: zone - Namespace: namespace", invoiceCategoryNamePrefix)},
+					{ID: 12, Name: "Zone: zone - Namespace: namespace"},
 				}}
 				mock.EXPECT().
 					SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -57,7 +56,7 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 			givenDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
 				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{
-					{ID: 12, Name: fmt.Sprintf("%sZone: zone - Namespace: namespace", invoiceCategoryNamePrefix)},
+					{ID: 12, Name: "Zone: zone - Namespace: namespace"},
 				}}
 				mock.EXPECT().
 					SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -70,7 +69,7 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 			givenDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
 				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{
-					{ID: 12, Name: fmt.Sprintf("%sZone: zone - Namespace: different", invoiceCategoryNamePrefix)},
+					{ID: 12, Name: "Zone: zone - Namespace: different"},
 				}}
 				mock.EXPECT().
 					SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -79,7 +78,7 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 				mock.EXPECT().
 					UpdateGenericModel(gomock.Any(), gomock.Any(), 12, model.InvoiceCategory{
 						ID:       12,
-						Name:     fmt.Sprintf("%sZone: zone - Namespace: namespace", invoiceCategoryNamePrefix),
+						Name:     "Zone: zone - Namespace: namespace",
 						SubTotal: true,
 					}).
 					Return(nil)
