@@ -8,3 +8,8 @@ import (
 type InvoiceCategoryReconciler struct {
 	odoo *model.Odoo
 }
+
+// NewInvoiceCategoryReconciler constructor.
+func NewInvoiceCategoryReconciler(odoo *model.Odoo) *InvoiceCategoryReconciler {
+	return &InvoiceCategoryReconciler{odoo: odoo}
+}
