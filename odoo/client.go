@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -13,19 +14,41 @@ import (
 type Client struct {
 	parsedURL *url.URL
 	db        string
+	username  string
+	password  string
 	http      *http.Client
 }
 
 // NewClient returns a new client with its basic fields set.
+// The URL must be in the format of `https://user:pass@host[:port]/db-name`.
 // It returns error if baseURL is not parseable with url.Parse.
-func NewClient(baseURL, db string) (*Client, error) {
+func NewClient(baseURL string) (*Client, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("proper URL format is required: %w", err)
 	}
+
+	if u.User == nil || u.User.Username() == "" {
+		return nil, fmt.Errorf("missing username and password in URL")
+	}
+	pw := ""
+	if value, set := u.User.Password(); set {
+		pw = value
+	} else {
+		return nil, fmt.Errorf("missing password in URL")
+	}
+
+	// Technical debt: This means an Odoo running under a path like https://odoo/pathprefix/ can't be parsed.
+	db := strings.Trim(u.Path, "/")
+	if db == "" {
+		return nil, fmt.Errorf("missing db name in URL path")
+	}
+
 	return &Client{
-		parsedURL: u,
-		db:        db,
+		parsedURL: &url.URL{Scheme: u.Scheme, Host: u.Host},
+		db:        strings.Trim(u.Path, "/"),
+		username:  u.User.Username(),
+		password:  pw,
 		http: &http.Client{
 			Timeout: 10 * time.Second,
 			Jar:     nil, // don't save any cookies!
@@ -43,13 +66,18 @@ type loginParams struct {
 //  - the credentials were wrong,
 //  - encoding or sending the request,
 //  - or decoding the request failed.
-func (c Client) Login(ctx context.Context, login, password string) (*Session, error) {
-	resp, err := c.requestSession(ctx, login, password)
+func (c Client) Login(ctx context.Context) (*Session, error) {
+	resp, err := c.requestSession(ctx, c.username, c.password)
 	if err != nil {
 		return nil, err
 	}
 
 	return c.decodeSession(resp)
+}
+
+// DBName returns the Odoo database name.
+func (c Client) DBName() string {
+	return c.db
 }
 
 func (c Client) requestSession(ctx context.Context, login string, password string) (*http.Response, error) {

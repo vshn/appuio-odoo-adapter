@@ -45,7 +45,7 @@ func TestSession_CreateGenericModel(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(odooMock.URL, "TestDB")
+	client, err := NewClient(newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB"))
 	require.NoError(t, err)
 	client.UseDebugLogger(true)
 	session := Session{client: client}
@@ -91,7 +91,7 @@ func TestSession_UpdateGenericModel(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(odooMock.URL, "TestDB")
+	client, err := NewClient(newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB"))
 	require.NoError(t, err)
 	client.UseDebugLogger(true)
 	session := Session{client: client}
@@ -133,7 +133,7 @@ func TestSession_DeleteGenericModel(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(odooMock.URL, "TestDB")
+	client, err := NewClient(newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB"))
 	require.NoError(t, err)
 	client.UseDebugLogger(true)
 	session := Session{client: client}
