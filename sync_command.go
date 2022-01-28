@@ -33,20 +33,13 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	_ = LogMetadata(context)
 	log := AppLogger(context).WithName(syncCommandName)
 
-	client, err := odoo.NewClient(c.OdooURL)
-	if err != nil {
-		return err
-	}
-	client.UseDebugLogger(context.Bool("debug"))
-	log.V(1).Info("Logging in to Odoo...", "url", c.OdooURL, "db", client.DBName())
-
 	odooCtx := logr.NewContext(context.Context, log)
-
-	session, err := client.Login(odooCtx)
+	log.V(1).Info("Logging in to Odoo...")
+	session, err := odoo.Open(odooCtx, c.OdooURL, odoo.ClientOptions{UseDebugLogger: context.Bool("debug")})
 	if err != nil {
 		return err
 	}
-	log.Info("Login succeeded", "uid", session.UID)
+	log.Info("login succeeded", "uid", session.UID)
 
 	// Demo Odoo API
 	o := model.NewOdoo(session)

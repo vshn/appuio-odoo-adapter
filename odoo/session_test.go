@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,10 +46,10 @@ func TestSession_CreateGenericModel(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB"))
+	u, err := url.Parse(odooMock.URL)
 	require.NoError(t, err)
-	client.UseDebugLogger(true)
-	session := Session{client: client}
+	session := Session{client: &Client{http: http.DefaultClient, parsedURL: u}}
+	session.client.http.Transport = newDebugTransport()
 	result, err := session.CreateGenericModel(newTestContext(t), "model", "data")
 	require.NoError(t, err)
 	assert.Equal(t, 221, result)
@@ -91,10 +92,10 @@ func TestSession_UpdateGenericModel(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB"))
+	u, err := url.Parse(odooMock.URL)
 	require.NoError(t, err)
-	client.UseDebugLogger(true)
-	session := Session{client: client}
+	session := Session{client: &Client{http: http.DefaultClient, parsedURL: u}}
+	session.client.http.Transport = newDebugTransport()
 	err = session.UpdateGenericModel(newTestContext(t), "model", 1, "data")
 	require.NoError(t, err)
 	assert.Equal(t, 1, numRequests)
@@ -133,10 +134,10 @@ func TestSession_DeleteGenericModel(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB"))
+	u, err := url.Parse(odooMock.URL)
 	require.NoError(t, err)
-	client.UseDebugLogger(true)
-	session := Session{client: client}
+	session := Session{client: &Client{http: http.DefaultClient, parsedURL: u}}
+	session.client.http.Transport = newDebugTransport()
 	err = session.DeleteGenericModel(newTestContext(t), "model", []int{100})
 	require.NoError(t, err)
 	assert.Equal(t, 1, numRequests)

@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-func TestNewClient(t *testing.T) {
+func TestClient_parseURL(t *testing.T) {
 	tests := map[string]struct {
 		givenURL         string
 		expectedPassword string
@@ -48,7 +48,8 @@ func TestNewClient(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			c, err := NewClient(tc.givenURL)
+			c := &Client{}
+			err := c.parseOdooURL(tc.givenURL)
 			if tc.expectedError != "" {
 				assert.EqualError(t, err, tc.expectedError)
 				return
@@ -102,11 +103,9 @@ func TestClient_Login_Success(t *testing.T) {
 	}))
 	defer odooMock.Close()
 
-	// Login
-	client, err := NewClient(newTestURL(t, odooMock.URL, testLogin, testPassword, "TestDB"))
-	require.NoError(t, err)
-	client.UseDebugLogger(true)
-	session, err := client.Login(newTestContext(t))
+	// login
+	u := newTestURL(t, odooMock.URL, testLogin, testPassword, "TestDB")
+	session, err := Open(newTestContext(t), u, ClientOptions{UseDebugLogger: true})
 	require.NoError(t, err)
 	assert.Equal(t, testUID, session.UID)
 	assert.Equal(t, testSID, session.SessionID)
@@ -142,10 +141,8 @@ func TestLogin_BadCredentials(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(newTestURL(t, odooMock.URL, testLogin, testPassword, "TestDB"))
-	require.NoError(t, err)
-	client.UseDebugLogger(true)
-	session, err := client.Login(newTestContext(t))
+	u := newTestURL(t, odooMock.URL, testLogin, testPassword, "TestDB")
+	session, err := Open(newTestContext(t), u, ClientOptions{UseDebugLogger: true})
 	require.EqualError(t, err, "invalid credentials")
 	assert.Nil(t, session)
 	assert.Equal(t, 1, numRequests)
@@ -176,10 +173,8 @@ func TestLogin_BadResponse(t *testing.T) {
 	defer odooMock.Close()
 
 	// Do request
-	client, err := NewClient(newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB"))
-	require.NoError(t, err)
-	client.UseDebugLogger(true)
-	session, err := client.Login(newTestContext(t))
+	u := newTestURL(t, odooMock.URL, "irrelevant", "irrelevant", "TestDB")
+	session, err := Open(newTestContext(t), u, ClientOptions{UseDebugLogger: true})
 	require.EqualError(t, err, "error from Odoo: &{Odoo Server Error 200 map[arguments:[] debug:Traceback xxx message: name:werkzeug.exceptions.Foo]}")
 	assert.Nil(t, session)
 	assert.Equal(t, 1, numRequests)
