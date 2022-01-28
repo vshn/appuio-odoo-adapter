@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 
 	"github.com/appuio/appuio-cloud-reporting/pkg/db"
 	"github.com/go-logr/logr"
@@ -14,10 +12,7 @@ import (
 )
 
 type syncCommand struct {
-	OdooURL      string
-	OdooUsername string
-	OdooPassword string
-	OdooDB       string
+	OdooURL string
 }
 
 var syncCommandName = "sync"
@@ -27,45 +22,24 @@ func newSyncCommand() *cli.Command {
 	return &cli.Command{
 		Name:   syncCommandName,
 		Usage:  "Sync Odoo entities from APPUiO Cloud",
-		Before: command.validate,
 		Action: command.execute,
 		Flags: []cli.Flag{
 			newOdooURLFlag(&command.OdooURL),
-			newOdooDBFlag(&command.OdooDB),
-			newOdooUsernameFlag(&command.OdooUsername),
-			newOdooPasswordFlag(&command.OdooPassword),
 		},
 	}
-}
-
-func (c *syncCommand) validate(context *cli.Context) error {
-	log := AppLogger(context).WithName(syncCommandName)
-	log.V(1).Info("validating config")
-	// The `Required` property in the StringFlag already checks if it's non-empty.
-	if _, err := url.Parse(c.OdooURL); err != nil {
-		return fmt.Errorf("could not parse %q as URL value for flag %s: %s", c.OdooURL, newOdooURLFlag(nil).Name, err)
-	}
-	return nil
 }
 
 func (c *syncCommand) execute(context *cli.Context) error {
 	_ = LogMetadata(context)
 	log := AppLogger(context).WithName(syncCommandName)
 
-	client, err := odoo.NewClient(c.OdooURL, c.OdooDB)
-	if err != nil {
-		return err
-	}
-	client.UseDebugLogger(context.Bool("debug"))
-	log.V(1).Info("Logging in to Odoo...", "url", c.OdooURL, "db", c.OdooDB)
-
 	odooCtx := logr.NewContext(context.Context, log)
-
-	session, err := client.Login(odooCtx, c.OdooUsername, c.OdooPassword)
+	log.V(1).Info("Logging in to Odoo...")
+	session, err := odoo.Open(odooCtx, c.OdooURL, odoo.ClientOptions{UseDebugLogger: context.Bool("debug")})
 	if err != nil {
 		return err
 	}
-	log.Info("Login succeeded", "uid", session.UID)
+	log.Info("login succeeded", "uid", session.UID)
 
 	// Demo Odoo API
 	o := model.NewOdoo(session)

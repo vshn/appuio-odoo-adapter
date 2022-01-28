@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -13,23 +14,68 @@ import (
 type Client struct {
 	parsedURL *url.URL
 	db        string
+	username  string
+	password  string
 	http      *http.Client
 }
 
-// NewClient returns a new client with its basic fields set.
-// It returns error if baseURL is not parseable with url.Parse.
-func NewClient(baseURL, db string) (*Client, error) {
+// ClientOptions configures the Odoo client.
+type ClientOptions struct {
+	// UseDebugLogger sets the http.Transport field of the internal http client with a transport implementation that logs the raw contents of requests and responses.
+	// The logger is retrieved from the request's context via logr.FromContextOrDiscard.
+	// The log level used is '2'.
+	// Any "password":"..." byte content is replaced with a placeholder to avoid leaking credentials.
+	// Still, this should not be called in production as other sensitive information might be leaked.
+	// This method is meant to be called before any requests are made (for example after setting up the Client).
+	UseDebugLogger bool
+}
+
+// Open returns a new client and tries to log in to create a session.
+// The URL must be in the format of `https://user:pass@host[:port]/db-name`.
+// It returns error if baseURL is not parseable with url.Parse or if the login failed.
+func Open(ctx context.Context, baseURL string, options ClientOptions) (*Session, error) {
+	client := &Client{}
+	err := client.parseOdooURL(baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	client.http = &http.Client{
+		Timeout: 10 * time.Second,
+		Jar:     nil, // don't save any cookies!
+	}
+
+	client.useDebugLogger(options.UseDebugLogger)
+
+	return client.login(ctx)
+}
+
+func (c *Client) parseOdooURL(baseURL string) error {
 	u, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("proper URL format is required: %w", err)
+		return fmt.Errorf("proper URL format is required: %w", err)
 	}
-	return &Client{
-		parsedURL: u,
-		db:        db,
-		http: &http.Client{
-			Timeout: 10 * time.Second,
-			Jar:     nil, // don't save any cookies!
-		}}, nil
+
+	if u.User == nil || u.User.Username() == "" {
+		return fmt.Errorf("missing username and password in URL")
+	}
+	pw := ""
+	if value, set := u.User.Password(); set {
+		pw = value
+	} else {
+		return fmt.Errorf("missing password in URL")
+	}
+
+	// Technical debt: This means an Odoo running under a path like https://odoo/pathprefix/ can't be parsed.
+	db := strings.Trim(u.Path, "/")
+	if db == "" {
+		return fmt.Errorf("missing db name in URL path")
+	}
+	c.parsedURL = &url.URL{Scheme: u.Scheme, Host: u.Host}
+	c.username = u.User.Username()
+	c.password = pw
+	c.db = db
+	return nil
 }
 
 type loginParams struct {
@@ -38,13 +84,13 @@ type loginParams struct {
 	Password string `json:"password,omitempty"`
 }
 
-// Login tries to authenticate the user against Odoo.
+// login tries to authenticate the user against Odoo.
 // It returns a session if authentication was successful. An error is returned if
 //  - the credentials were wrong,
 //  - encoding or sending the request,
 //  - or decoding the request failed.
-func (c Client) Login(ctx context.Context, login, password string) (*Session, error) {
-	resp, err := c.requestSession(ctx, login, password)
+func (c Client) login(ctx context.Context) (*Session, error) {
+	resp, err := c.requestSession(ctx, c.username, c.password)
 	if err != nil {
 		return nil, err
 	}
