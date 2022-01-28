@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
+	"github.com/appuio/appuio-cloud-reporting/pkg/db"
 	"github.com/go-logr/logr"
 	"github.com/urfave/cli/v2"
 	"github.com/vshn/appuio-odoo-adapter/odoo"
 	"github.com/vshn/appuio-odoo-adapter/odoo/model"
+	"github.com/vshn/appuio-odoo-adapter/sync"
 )
 
 type syncCommand struct {
@@ -64,8 +67,24 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	}
 	log.Info("Login succeeded", "uid", session.UID)
 
-	// Demo
-	models := model.NewOdoo(session)
+	// Demo Odoo API
+	o := model.NewOdoo(session)
+	c.demonstrateOdooAPI(odooCtx, o, log)
+
+	log.Info("About to demonstrate a InvoiceCategoryReconciler")
+	// Demo with Faked Reporting category
+	rc := sync.NewInvoiceCategoryReconciler(o)
+	cat := &db.Category{Source: "zone:namespace"}
+	log.Info("Reconciling category", "category", cat)
+	_, err = rc.Reconcile(odooCtx, cat)
+	if err != nil {
+		return err
+	}
+	log.Info("Reconciled category", "category", cat)
+	return nil
+}
+
+func (c *syncCommand) demonstrateOdooAPI(odooCtx context.Context, odoo *model.Odoo, log logr.Logger) {
 	createCategory := model.InvoiceCategory{
 		Name:      "test-category-odoo-adapter",
 		Sequence:  10,
@@ -73,27 +92,25 @@ func (c *syncCommand) execute(context *cli.Context) error {
 		SubTotal:  true,
 	}
 
-	newCategory, err := models.CreateInvoiceCategory(odooCtx, createCategory)
+	newCategory, err := odoo.CreateInvoiceCategory(odooCtx, createCategory)
 	c.logIfErr(log, err)
 	log.Info("Created new category", "category", newCategory)
 
-	category, err := models.FetchInvoiceCategoryByID(odooCtx, newCategory.ID)
+	category, err := odoo.FetchInvoiceCategoryByID(odooCtx, newCategory.ID)
 	log.Info("Fetched category", "category", category)
 
 	newCategory.Sequence = 20
-	err = models.UpdateInvoiceCategory(odooCtx, newCategory)
+	err = odoo.UpdateInvoiceCategory(odooCtx, newCategory)
 	c.logIfErr(log, err)
 	log.Info("Updated category", "category", newCategory)
 
-	list, err := models.SearchInvoiceCategoriesByName(odooCtx, "odoo-adapter")
+	list, err := odoo.SearchInvoiceCategoriesByName(odooCtx, "odoo-adapter")
 	c.logIfErr(log, err)
 	log.Info("Fetched list", "list", list)
 
-	err = models.DeleteInvoiceCategory(odooCtx, newCategory)
+	err = odoo.DeleteInvoiceCategory(odooCtx, newCategory)
 	log.Info("Deleted new category", "category", newCategory)
 	c.logIfErr(log, err)
-
-	return nil
 }
 
 func (c *syncCommand) logIfErr(logger logr.Logger, err error) {

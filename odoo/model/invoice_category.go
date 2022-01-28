@@ -11,7 +11,7 @@ type InvoiceCategory struct {
 	// ID is the data record identifier.
 	ID int `json:"id,omitempty"`
 	// Name is the title of the category/section within an invoice.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// Sequence controls how line items are grouped together and how each category is ordered within an invoice.
 	//
 	// If there are line items that share the same category, but each category has a unique sequence number, then all line items are grouped together.
@@ -20,13 +20,18 @@ type InvoiceCategory struct {
 	//
 	// If there are categories that share the same sequence number then the ordering of line items greatly matters within an invoice.
 	// Line items that share the same category but aren't sequentially defined in the invoice end up distributed ("as is") with the category appearing multiple times.
-	Sequence int `json:"sequence,omitempty"`
+	Sequence int `json:"sequence"`
 	// PageBreak causes the next line item to be on the next page in a PDF (after the last line item).
-	PageBreak bool `json:"pagebreak,omitempty"`
+	PageBreak bool `json:"pagebreak"`
 	// Separator causes a line printed with "***" after the last line item within the same category.
-	Separator bool `json:"separator,omitempty"`
+	Separator bool `json:"separator"`
 	// SubTotal causes an additional line printed with an accumulated subtotal of all line items within the same category.
-	SubTotal bool `json:"subtotal,omitempty"`
+	SubTotal bool `json:"subtotal"`
+}
+
+// InvoiceCategoryList holds the search results for InvoiceCategory for deserialization.
+type InvoiceCategoryList struct {
+	Items []InvoiceCategory `json:"records"`
 }
 
 // CreateInvoiceCategory creates a new invoice category and returns the created category.
@@ -74,15 +79,11 @@ func (o Odoo) SearchInvoiceCategoriesByName(ctx context.Context, searchString st
 }
 
 func (o Odoo) searchCategories(ctx context.Context, domainFilters []odoo.Filter) ([]InvoiceCategory, error) {
-	type readResult struct {
-		Records []InvoiceCategory `json:"records"`
-	}
-	result := &readResult{}
-
+	result := &InvoiceCategoryList{}
 	err := o.querier.SearchGenericModel(ctx, odoo.SearchReadModel{
 		Model:  "sale_layout.category",
 		Domain: domainFilters,
 		Fields: []string{"name", "sequence", "pagebreak", "separator", "subtotal"},
 	}, result)
-	return result.Records, err
+	return result.Items, err
 }
