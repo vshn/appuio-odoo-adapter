@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/appuio/appuio-cloud-reporting/pkg/db"
+	"github.com/appuio/appuio-cloud-reporting/pkg/erp/entity"
 	"github.com/go-logr/logr"
 	"github.com/urfave/cli/v2"
 	"github.com/vshn/appuio-odoo-adapter/odoo"
@@ -48,7 +48,7 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	log.Info("About to demonstrate a InvoiceCategoryReconciler")
 	// Demo with Faked Reporting category
 	rc := sync.NewInvoiceCategoryReconciler(o)
-	cat := &db.Category{Source: "zone:namespace"}
+	cat := entity.Category{Source: "zone:namespace"}
 	log.Info("Reconciling category", "category", cat)
 	_, err = rc.Reconcile(odooCtx, cat)
 	if err != nil {

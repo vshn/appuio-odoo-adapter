@@ -1,10 +1,9 @@
 package sync
 
 import (
-	"database/sql"
 	"testing"
 
-	"github.com/appuio/appuio-cloud-reporting/pkg/db"
+	"github.com/appuio/appuio-cloud-reporting/pkg/erp/entity"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,13 +13,13 @@ import (
 
 func TestOdooSyncer_SyncCategory(t *testing.T) {
 	tests := map[string]struct {
-		givenDBCategory    *db.Category
-		mockSetup          func(mock *odoomock.MockQueryExecutor)
-		expectedDBCategory db.Category
-		expectedError      string
+		givenEntityCategory    entity.Category
+		mockSetup              func(mock *odoomock.MockQueryExecutor)
+		expectedEntityCategory entity.Category
+		expectedError          string
 	}{
 		"GivenEmptyTarget_ThenExpectCreatedCategoryAndUpdateTarget": {
-			givenDBCategory: &db.Category{Source: "zone:namespace"},
+			givenEntityCategory: entity.Category{Source: "zone:namespace"},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
 				mock.EXPECT().
 					CreateGenericModel(gomock.Any(), gomock.Any(), model.InvoiceCategory{
@@ -29,14 +28,14 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 					}).
 					Return(12, nil)
 			},
-			expectedDBCategory: db.Category{
+			expectedEntityCategory: entity.Category{
 				Source: "zone:namespace",
-				Target: sql.NullString{String: "12", Valid: true},
+				Target: "12",
 			},
 		},
 		"GivenTargetSet_WhenCategoryDoesNotExistInOdoo_ThenExpectError": {
 			// this is the case if the expected category got deleted in odoo by a 3rd party
-			givenDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
+			givenEntityCategory: entity.Category{Source: "zone:namespace", Target: "12"},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
 				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{}}
 				mock.EXPECT().
@@ -47,7 +46,7 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 			expectedError: "invoice category with id 12 (\"Zone: zone - Namespace: namespace\") not found in Odoo",
 		},
 		"GivenTargetSet_WhenPropertiesAreUpToDate_ThenDoNothing": {
-			givenDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
+			givenEntityCategory: entity.Category{Source: "zone:namespace", Target: "12"},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
 				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{
 					{ID: 12, Name: "Zone: zone - Namespace: namespace", SubTotal: true},
@@ -57,10 +56,10 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 					SetArg(2, result).
 					Return(nil)
 			},
-			expectedDBCategory: db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
+			expectedEntityCategory: entity.Category{Source: "zone:namespace", Target: "12"},
 		},
 		"GivenTargetSet_WhenPropertiesAreDifferent_ThenUpdateCategoryInOdoo": {
-			givenDBCategory: &db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
+			givenEntityCategory: entity.Category{Source: "zone:namespace", Target: "12"},
 			mockSetup: func(mock *odoomock.MockQueryExecutor) {
 				result := model.InvoiceCategoryList{Items: []model.InvoiceCategory{
 					{ID: 12, Name: "Zone: zone - Namespace: different"},
@@ -77,7 +76,7 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 					}).
 					Return(nil)
 			},
-			expectedDBCategory: db.Category{Source: "zone:namespace", Target: sql.NullString{String: "12", Valid: true}},
+			expectedEntityCategory: entity.Category{Source: "zone:namespace", Target: "12"},
 		},
 	}
 	for name, tc := range tests {
@@ -90,44 +89,44 @@ func TestOdooSyncer_SyncCategory(t *testing.T) {
 			s := InvoiceCategoryReconciler{odoo: model.NewOdoo(mock)}
 
 			tctx := newTestContext(t)
-			result, err := s.Reconcile(tctx, tc.givenDBCategory)
+			result, err := s.Reconcile(tctx, tc.givenEntityCategory)
 			if tc.expectedError != "" {
 				assert.EqualError(t, err, tc.expectedError)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tc.expectedDBCategory, result)
+			assert.Equal(t, tc.expectedEntityCategory, result)
 		})
 	}
 }
 
 func TestToInvoiceCategory(t *testing.T) {
 	tests := map[string]struct {
-		givenCategory    *db.Category
+		givenCategory    entity.Category
 		expectedCategory model.InvoiceCategory
 		expectedError    string
 	}{
 		"GivenEmptyFields_ThenExpectDefaultFields": {
-			givenCategory:    &db.Category{},
+			givenCategory:    entity.Category{},
 			expectedCategory: model.InvoiceCategory{SubTotal: true},
 		},
 		"GivenNumericTarget_ThenConvertToID": {
-			givenCategory:    &db.Category{Target: sql.NullString{String: "12", Valid: true}},
+			givenCategory:    entity.Category{Target: "12"},
 			expectedCategory: model.InvoiceCategory{ID: 12, SubTotal: true},
 		},
 		"GivenSource_ThenConvertName": {
-			givenCategory: &db.Category{Source: "zone:namespace"},
+			givenCategory: entity.Category{Source: "zone:namespace"},
 			expectedCategory: model.InvoiceCategory{
 				Name:     "Zone: zone - Namespace: namespace",
 				SubTotal: true,
 			},
 		},
 		"GivenInvalidSource_ThenExpectError": {
-			givenCategory: &db.Category{Source: "invalid"},
+			givenCategory: entity.Category{Source: "invalid"},
 			expectedError: "cannot parse source: invalid: expected format `cluster:namespace`",
 		},
 		"GivenInvalidTarget_ThenExpectError": {
-			givenCategory: &db.Category{Target: sql.NullString{String: "invalid", Valid: true}},
+			givenCategory: entity.Category{Target: "invalid"},
 			expectedError: "numeric category ID expected: strconv.Atoi: parsing \"invalid\": invalid syntax",
 		},
 	}
@@ -147,27 +146,27 @@ func TestToInvoiceCategory(t *testing.T) {
 
 func TestMergeWithInvoiceCategory(t *testing.T) {
 	tests := map[string]struct {
-		givenDBCategory      db.Category
+		givenDBCategory      entity.Category
 		givenInvoiceCategory model.InvoiceCategory
-		expectedResult       db.Category
+		expectedResult       entity.Category
 	}{
 		"GivenEmptyFields_ThenExpectEmptyResult": {
-			givenDBCategory:      db.Category{},
+			givenDBCategory:      entity.Category{},
 			givenInvoiceCategory: model.InvoiceCategory{},
-			expectedResult:       db.Category{},
+			expectedResult:       entity.Category{},
 		},
 		"GivenNonZeroID_ThenConvertToTarget": {
 			givenInvoiceCategory: model.InvoiceCategory{ID: 12},
-			expectedResult: db.Category{
-				Target: sql.NullString{String: "12", Valid: true},
+			expectedResult: entity.Category{
+				Target: "12",
 			},
 		},
 		"GivenName_ThenIgnoreName": {
-			givenDBCategory: db.Category{Source: "zone:namespace"},
+			givenDBCategory: entity.Category{Source: "zone:namespace"},
 			givenInvoiceCategory: model.InvoiceCategory{
 				Name: "Zone: cluster - Namespace: another",
 			},
-			expectedResult: db.Category{
+			expectedResult: entity.Category{
 				Source: "zone:namespace",
 			},
 		},
