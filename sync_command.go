@@ -76,7 +76,7 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	rc := sync.NewInvoiceCategoryReconciler(o)
 	cat := &db.Category{Source: "zone:namespace"}
 	log.Info("Reconciling category", "category", cat)
-	err = rc.Reconcile(odooCtx, cat)
+	_, err = rc.Reconcile(odooCtx, cat)
 	if err != nil {
 		return err
 	}
