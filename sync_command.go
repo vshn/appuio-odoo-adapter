@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/appuio/appuio-cloud-reporting/pkg/erp/entity"
+	"github.com/appuio/appuio-cloud-reporting/pkg/categories"
+	"github.com/appuio/appuio-cloud-reporting/pkg/db"
 	"github.com/go-logr/logr"
 	"github.com/urfave/cli/v2"
 	"github.com/vshn/appuio-odoo-adapter/odoo"
@@ -12,7 +13,8 @@ import (
 )
 
 type syncCommand struct {
-	OdooURL string
+	OdooURL     string
+	DatabaseURL string
 }
 
 var syncCommandName = "sync"
@@ -25,6 +27,7 @@ func newSyncCommand() *cli.Command {
 		Action: command.execute,
 		Flags: []cli.Flag{
 			newOdooURLFlag(&command.OdooURL),
+			newDatabaseURLFlag(&command.DatabaseURL),
 		},
 	}
 }
@@ -43,19 +46,14 @@ func (c *syncCommand) execute(context *cli.Context) error {
 
 	// Demo Odoo API
 	o := model.NewOdoo(session)
-	c.demonstrateOdooAPI(odooCtx, o, log)
+	//c.demonstrateOdooAPI(odooCtx, o, log)
 
-	log.Info("About to demonstrate a InvoiceCategoryReconciler")
-	// Demo with Faked Reporting category
 	rc := sync.NewInvoiceCategoryReconciler(o)
-	cat := entity.Category{Source: "zone:namespace"}
-	log.Info("Reconciling category", "category", cat)
-	_, err = rc.Reconcile(odooCtx, cat)
-	if err != nil {
-		return err
-	}
-	log.Info("Reconciled category", "category", cat)
-	return nil
+
+	log.V(1).Info("Opening database connection...")
+	driver, err := db.Openx(c.DatabaseURL)
+	err = categories.Reconcile(odooCtx, driver, rc)
+	return err
 }
 
 func (c *syncCommand) demonstrateOdooAPI(odooCtx context.Context, odoo *model.Odoo, log logr.Logger) {
