@@ -33,9 +33,9 @@ func (o *OdooAdapter) Open(ctx context.Context) (erp.Driver, error) {
 }
 
 func (o *OdooDriver) initializeSession(ctx context.Context) error {
-	odooUrl := getEnv("ODOO_URL")
+	odooURL := getEnv("ODOO_URL")
 	useDebug := getEnv("DEBUG") == "true"
-	session, err := odoo.Open(ctx, odooUrl, odoo.ClientOptions{UseDebugLogger: useDebug})
+	session, err := odoo.Open(ctx, odooURL, odoo.ClientOptions{UseDebugLogger: useDebug})
 	if err != nil {
 		return err
 	}

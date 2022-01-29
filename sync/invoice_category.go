@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/appuio/appuio-cloud-reporting/pkg/erp/entity"
+	"github.com/go-logr/logr"
 	"github.com/vshn/appuio-odoo-adapter/odoo/model"
 )
 
@@ -29,7 +30,9 @@ func NewInvoiceCategoryReconciler(odoo *model.Odoo) *InvoiceCategoryReconciler {
 //  * If entity.Category.Target has a value then it will search for a matching model.InvoiceCategory:
 //    * If not found, it will return an error.
 //    * If found and model.InvoiceCategory is up-to-date, it will return without error (noop).
-//    * If found and model.InvoiceCategory has different properties, the model.InvoiceCategory is updated/reset.
+//    * If found and model.InvoiceCategory has other properties than desired, the model.InvoiceCategory is updated/reset.
+// Reconcile implements erp.CategoryReconciler.
+// Note: A logger is retrieved from logr.FromContextOrDiscard.
 func (r *InvoiceCategoryReconciler) Reconcile(ctx context.Context, category entity.Category) (entity.Category, error) {
 	ic, err := ToInvoiceCategory(category)
 	if err != nil {
@@ -42,6 +45,7 @@ func (r *InvoiceCategoryReconciler) Reconcile(ctx context.Context, category enti
 }
 
 func (r *InvoiceCategoryReconciler) createCategoryInOdoo(ctx context.Context, current entity.Category, category model.InvoiceCategory) (entity.Category, error) {
+	logr.FromContextOrDiscard(ctx).WithName("odoo").V(1).Info("Creating new invoice category in Odoo", "category", category)
 	created, err := r.odoo.CreateInvoiceCategory(ctx, category)
 	if err != nil {
 		return entity.Category{}, err
@@ -50,6 +54,8 @@ func (r *InvoiceCategoryReconciler) createCategoryInOdoo(ctx context.Context, cu
 }
 
 func (r *InvoiceCategoryReconciler) updateCategoryIfNeeded(ctx context.Context, ic model.InvoiceCategory) error {
+	logger := logr.FromContextOrDiscard(ctx).WithName("odoo")
+	logger.V(1).Info("Fetching invoice category from Odoo", "category", ic)
 	existingIC, err := r.odoo.FetchInvoiceCategoryByID(ctx, ic.ID)
 	if err != nil {
 		return err
@@ -62,6 +68,7 @@ func (r *InvoiceCategoryReconciler) updateCategoryIfNeeded(ctx context.Context, 
 	if !CompareInvoiceCategories(*existingIC, ic) {
 		// Updating existing category should rarely be the case.
 		// Possible case is given if the category properties have been manually updated in Odoo, in that case revert it since the DB is authoritative.
+		logger.V(1).Info("Updating invoice category in Odoo", "category", ic)
 		return r.odoo.UpdateInvoiceCategory(ctx, ic)
 	}
 	return nil
