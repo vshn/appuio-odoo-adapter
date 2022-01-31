@@ -51,8 +51,10 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	rc := sync.NewInvoiceCategoryReconciler(o)
 
 	log.V(1).Info("Opening database connection...")
-	driver, err := db.Openx(c.DatabaseURL)
-	err = categories.Reconcile(odooCtx, driver, rc)
+	rdb, err := db.Openx(c.DatabaseURL)
+	defer rdb.Close()
+
+	err = categories.Reconcile(odooCtx, rdb, rc)
 	return err
 }
 

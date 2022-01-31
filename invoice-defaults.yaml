@@ -1,0 +1,12 @@
+invoice:
+  state: draft
+  user_id: 37      # Portal Automation User
+  payment_term: 3  # 30 Days
+  account_id: 49   # 1100 Forderungen ggü. Dritten aus der Schweiz
+  currency_id: 6   # CHF
+  journal_id: 1    # Sales Journal (CHF)
+
+invoice_line:
+  account_id: 602
+  invoice_line_tax_id: # 3400 Dienstleistungserlöse
+  - id: 43             # 7.7%
