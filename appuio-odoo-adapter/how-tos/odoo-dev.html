@@ -164,6 +164,9 @@
 <li>
 <p><code>oc</code> (OpenShift client) to login to APPUiO Zone.</p>
 </li>
+<li>
+<p><code>base64</code></p>
+</li>
 </ul>
 </div>
 </div>
@@ -193,12 +196,29 @@
 </div>
 </li>
 <li>
+<p>Port-forward the reporting database.
+Certain operations require a connection to the reporting database.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">oc -n appuio-reporting port-forward svc/reporting-db 5432</code></pre>
+</div>
+</div>
+</li>
+<li>
 <p>Run the project</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">export OA_ODOO_USERNAME=&lt;admin-username&gt;
-export OA_ODOO_PASSWORD=&lt;admin-password&gt;
-go run . sync --odoo-url=http://localhost:8080 --odoo-db=&lt;database-name&gt;</code></pre>
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">ODOO_USERNAME=&lt;admin-username&gt;
+ODOO_PASSWORD=&lt;admin-password&gt;
+ODOO_DB=&lt;db-name&gt;
+
+DB_USER=$(kubectl -n appuio-reporting get secret/reporting-db-superuser -o jsonpath='{.data.user}' | base64 --decode)
+DB_PASSWORD=$(kubectl -n appuio-reporting get secret/reporting-db-superuser -o jsonpath='{.data.password}' | base64 --decode)
+
+export OA_DB_URL="postgres://${DB_USER}:${DB_PASSWORD}@localhost/reporting?sslmode=disable"
+export OA_ODOO_URL="http://${ODOO_USERNAME}:${ODOO_PASSWORD}@localhost:8080/${ODOO_DB}"
+
+go run . sync</code></pre>
 </div>
 </div>
 </li>
