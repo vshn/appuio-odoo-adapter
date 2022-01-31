@@ -5,6 +5,7 @@
 * Administrator credentials for Odoo Test instance
 * `kubectl` and access to Namespace where Odoo runs
 * `oc` (OpenShift client) to login to APPUiO Zone.
+* `base64`
 
 == Using Port Forward
 
@@ -24,11 +25,27 @@ oc login --token=sha256~xxx --server=https://api.cloudscale-lpg-2.appuio.cloud:6
 oc -n vshn-odoo-test port-forward svc/odoo 8080:8000
 ----
 
+. Port-forward the reporting database.
+  Certain operations require a connection to the reporting database.
++
+[source,bash]
+----
+oc -n appuio-reporting port-forward svc/reporting-db 5432
+----
+
 . Run the project
 +
 [source,bash]
 ----
-export OA_ODOO_USERNAME=<admin-username>
-export OA_ODOO_PASSWORD=<admin-password>
-go run . sync --odoo-url=http://localhost:8080 --odoo-db=<database-name>
+ODOO_USERNAME=<admin-username>
+ODOO_PASSWORD=<admin-password>
+ODOO_DB=<db-name>
+
+DB_USER=$(kubectl -n appuio-reporting get secret/reporting-db-superuser -o jsonpath='{.data.user}' | base64 --decode)
+DB_PASSWORD=$(kubectl -n appuio-reporting get secret/reporting-db-superuser -o jsonpath='{.data.password}' | base64 --decode)
+
+export OA_DB_URL="postgres://${DB_USER}:${DB_PASSWORD}@localhost/reporting?sslmode=disable"
+export OA_ODOO_URL="http://${ODOO_USERNAME}:${ODOO_PASSWORD}@localhost:8080/${ODOO_DB}"
+
+go run . sync
 ----
