@@ -67,12 +67,11 @@ func createInvoice(ctx context.Context, client *model.Odoo, invoice model.Invoic
 	createdLines := make([]model.InvoiceLine, 0, len(lines))
 	for _, line := range lines {
 		line, err := client.InvoiceAddLine(ctx, created.ID, line)
-		if err != nil {
-			return created.ID, fmt.Errorf("error adding line to invoice %d: %w", created.ID, err)
-		}
 		createdLines = append(createdLines, line)
+		if err != nil {
+			return created.ID, fmt.Errorf("error adding line to invoice %d: %w; created until error %+v", created.ID, err, createdLines)
+		}
 	}
-	_ = createdLines
 
 	err = client.InvoiceCalculateTaxes(ctx, created.ID)
 	if err != nil {
