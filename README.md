@@ -19,6 +19,23 @@ Such a plugin is called "adapter" in this context.
 
 VSHN uses currently Odoo as its ERP software and this repository "implements" the adapter to serve as a bridge between APPUiO Cloud and Odoo.
 
+## Quick Start
+
+### Generate Invoices
+
+```sh
+kubectl -n appuio-reporting port-forward svc/reporting-db 5432 &
+kubectl -n vshn-odoo-test port-forward svc/odoo 8080:8000 &
+
+DB_USER=$(kubectl -n appuio-reporting get secret/reporting-db-superuser -o jsonpath='{.data.user}' | base64 --decode)
+DB_PASSWORD=$(kubectl -n appuio-reporting get secret/reporting-db-superuser -o jsonpath='{.data.password}' | base64 --decode)
+
+export OA_DB_URL="postgres://${DB_USER}:${DB_PASSWORD}@localhost/reporting?sslmode=disable"
+export OA_ODOO_URL="http://admin:${ODOO_PASSWORD}@localhost:8080/VSHNProd_2022-01-31"
+
+go run . invoice --year 2022 --month 1
+```
+
 ## Documentation
 
 **Architecture documentation**: https://kb.vshn.ch/appuio-cloud
