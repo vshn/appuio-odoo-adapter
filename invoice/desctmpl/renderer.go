@@ -2,6 +2,7 @@ package desctmpl
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"strings"
 	"text/template"
@@ -40,6 +41,12 @@ func ItemDescriptionTemplateRendererFromFS(fs fs.FS, extension string) (*ItemDes
 
 // RenderItemDescription renders an item description. Uses the `.ProductRef.Source` as the key to look which template to use.
 func (r *ItemDescriptionTemplateRenderer) RenderItemDescription(_ context.Context, item invoice.Item) (string, error) {
+	key := item.ProductRef.Source
+	tmpl := r.root.Lookup(key + r.extension)
+	if tmpl == nil {
+		return "", fmt.Errorf("failed to find template for `ProductRef.Source=%q`%s", key, r.root.DefinedTemplates())
+	}
+
 	b := &strings.Builder{}
 	err := r.root.ExecuteTemplate(b, item.ProductRef.Source+r.extension, item)
 	return b.String(), err
