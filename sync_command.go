@@ -1,7 +1,8 @@
 package main
 
 import (
-	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/appuio/appuio-cloud-reporting/pkg/categories"
 	"github.com/appuio/appuio-cloud-reporting/pkg/db"
@@ -10,11 +11,14 @@ import (
 	"github.com/vshn/appuio-odoo-adapter/odoo"
 	"github.com/vshn/appuio-odoo-adapter/odoo/model"
 	"github.com/vshn/appuio-odoo-adapter/sync"
+	"gopkg.in/yaml.v3"
 )
 
 type syncCommand struct {
 	OdooURL     string
 	DatabaseURL string
+
+	ZoneNameFile string
 }
 
 var syncCommandName = "sync"
@@ -28,6 +32,8 @@ func newSyncCommand() *cli.Command {
 		Flags: []cli.Flag{
 			newOdooURLFlag(&command.OdooURL),
 			newDatabaseURLFlag(&command.DatabaseURL),
+			&cli.StringFlag{Name: "zone-name-file", Usage: "Path to a file with zone name mappings.",
+				EnvVars: envVars("ZONE_NAME_FILE"), Destination: &command.ZoneNameFile, Value: "zone-names.yaml", Required: false},
 		},
 	}
 }
@@ -44,57 +50,41 @@ func (c *syncCommand) execute(context *cli.Context) error {
 	}
 	log.Info("login succeeded", "uid", session.UID)
 
-	// Demo Odoo API
-	o := model.NewOdoo(session)
-	//c.demonstrateOdooAPI(odooCtx, o, log)
-
-	rc := sync.NewInvoiceCategoryReconciler(o)
-
 	log.V(1).Info("Opening database connection...")
 	rdb, err := db.Openx(c.DatabaseURL)
+	if err != nil {
+		return err
+	}
 	defer rdb.Close()
+
+	log.V(1).Info("loading zone name mappings...")
+	mapper, err := c.zoneNameMapper()
+	if err != nil {
+		return err
+	}
+
+	o := model.NewOdoo(session)
+	rc := sync.NewInvoiceCategoryReconciler(o)
+	rc.ZoneNameMapper = mapper
 
 	err = categories.Reconcile(odooCtx, rdb, rc)
 	return err
 }
 
-func (c *syncCommand) demonstrateOdooAPI(odooCtx context.Context, odoo *model.Odoo, log logr.Logger) {
-	createCategory := model.InvoiceCategory{
-		Name:      "test-category-odoo-adapter",
-		Sequence:  10,
-		Separator: true,
-		SubTotal:  true,
+func (c *syncCommand) zoneNameMapper() (sync.ZoneNameMapper, error) {
+	if c.ZoneNameFile == "" {
+		return nil, nil
 	}
 
-	newCategory, err := odoo.CreateInvoiceCategory(odooCtx, createCategory)
-	c.logIfErr(log, err)
-	log.Info("Created new category", "category", newCategory)
-
-	category, err := odoo.FetchInvoiceCategoryByID(odooCtx, newCategory.ID)
-	log.Info("Fetched category", "category", category)
-
-	newCategory.Sequence = 20
-	err = odoo.UpdateInvoiceCategory(odooCtx, newCategory)
-	c.logIfErr(log, err)
-	log.Info("Updated category", "category", newCategory)
-
-	list, err := odoo.SearchInvoiceCategoriesByName(odooCtx, "odoo-adapter")
-	c.logIfErr(log, err)
-	log.Info("Fetched list", "list", list)
-
-	err = odoo.DeleteInvoiceCategory(odooCtx, newCategory)
-	log.Info("Deleted new category", "category", newCategory)
-	c.logIfErr(log, err)
-}
-
-func (c *syncCommand) logIfErr(logger logr.Logger, err error) {
+	raw, err := os.ReadFile(filepath.Join(".", c.ZoneNameFile))
 	if err != nil {
-		logger.Error(err, "demo failed")
+		return nil, err
 	}
-}
+	var mappings map[string]string
+	err = yaml.Unmarshal([]byte(raw), &mappings)
+	if err != nil {
+		return nil, err
+	}
 
-func (c *syncCommand) shutdown(context *cli.Context) error {
-	log := AppLogger(context).WithName(syncCommandName)
-	log.Info("Shutting down " + syncCommandName)
-	return nil
+	return &sync.StaticZoneMapper{Map: mappings}, nil
 }
