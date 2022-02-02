@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/appuio/appuio-cloud-reporting v0.3.0
 	github.com/go-logr/logr v1.2.2
 	github.com/go-logr/zapr v1.2.2
