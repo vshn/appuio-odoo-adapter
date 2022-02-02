@@ -7,7 +7,7 @@ RUN \
     ca-certificates \
     tzdata
 
-ENTRYPOINT ["odoo-adapter"]
-COPY odoo-adapter /usr/bin/
+ENTRYPOINT ["appuio-odoo-adapter"]
+COPY appuio-odoo-adapter /usr/bin/
 
 USER 65536:0

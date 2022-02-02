@@ -5,7 +5,7 @@ PROJECT_NAME ?= appuio-odoo-adapter
 PROJECT_OWNER ?= vshn
 
 ## BUILD:go
-BIN_FILENAME ?= odoo-adapter
+BIN_FILENAME ?= appuio-odoo-adapter
 
 ## BUILD:docker
 DOCKER_CMD ?= docker

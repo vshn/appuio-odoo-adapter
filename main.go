@@ -19,7 +19,7 @@ var (
 	commit  = "-dirty-"
 	date    = time.Now().Format("2006-01-02")
 
-	appName     = "odoo-adapter"
+	appName     = "appuio-odoo-adapter"
 	appLongName = "Adapter for APPUiO Cloud with Odoo as implementation"
 
 	// envPrefix is the global prefix to use for the keys in environment variables
