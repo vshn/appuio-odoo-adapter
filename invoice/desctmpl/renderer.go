@@ -7,14 +7,14 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/Masterminds/sprig"
+	"github.com/Masterminds/sprig/v3"
 
 	"github.com/appuio/appuio-cloud-reporting/pkg/invoice"
 )
 
 var rootTemplate = template.New("root").Funcs(template.FuncMap{
 	"perMinute": func(v float64) float64 { return v / float64(60) },
-}).Funcs(sprig.GenericFuncMap())
+}).Funcs(sprig.TxtFuncMap())
 
 // ItemDescriptionTemplateRenderer renders item descriptions using the golang template engine.
 // It uses the `.ProductRef.Source` as key to look the template up.
