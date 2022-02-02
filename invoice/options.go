@@ -1,8 +1,11 @@
 package invoice
 
 import (
+	"context"
+	"fmt"
 	"time"
 
+	"github.com/appuio/appuio-cloud-reporting/pkg/invoice"
 	"github.com/vshn/appuio-odoo-adapter/odoo/model"
 )
 
@@ -11,6 +14,8 @@ type options struct {
 
 	invoiceDefaults     model.Invoice
 	invoiceLineDefaults model.InvoiceLine
+
+	itemDescriptionRenderer ItemDescriptionRenderer
 }
 
 // Option represents a report option.
@@ -31,6 +36,14 @@ func (o options) InvoiceDateOrNow() time.Time {
 		return time.Now()
 	}
 	return o.invoiceDate
+}
+
+func (o options) ItemDescriptionRenderer() ItemDescriptionRenderer {
+	if o.itemDescriptionRenderer != nil {
+		return o.itemDescriptionRenderer
+	}
+
+	return DefaultItemDescriptionRenderer{}
 }
 
 // WithInvoiceDate sets the date for the invoice.
@@ -64,4 +77,28 @@ type invoiceLineDefaults model.InvoiceLine
 
 func (t invoiceLineDefaults) set(o *options) {
 	o.invoiceLineDefaults = model.InvoiceLine(t)
+}
+
+// ItemDescriptionRenderer is the interface used to render an item description.
+type ItemDescriptionRenderer interface {
+	RenderItemDescription(context.Context, invoice.Item) (string, error)
+}
+
+// WithItemDescriptionRenderer sets the description renderer for an invoice line.
+func WithItemDescriptionRenderer(tm ItemDescriptionRenderer) Option {
+	return itemDescriptionRendererOpt{tm}
+}
+
+type itemDescriptionRendererOpt struct{ ItemDescriptionRenderer }
+
+func (t itemDescriptionRendererOpt) set(o *options) {
+	o.itemDescriptionRenderer = t.ItemDescriptionRenderer
+}
+
+// DefaultItemDescriptionRenderer is the default way to render an item description.
+type DefaultItemDescriptionRenderer struct{}
+
+// RenderItemDescription renders the item description using the extended default format "%+v"
+func (r DefaultItemDescriptionRenderer) RenderItemDescription(_ context.Context, i invoice.Item) (string, error) {
+	return fmt.Sprintf("%+v", i), nil
 }

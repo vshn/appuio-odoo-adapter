@@ -56,6 +56,7 @@ lint: fmt vet generate ## All-in-one linting
 .PHONY: generate
 generate: ## Generate additional code and artifacts
 	@go generate ./...
+	@go test ./description_templates
 
 .PHONY: clean
 clean: ## Cleans local build artifacts

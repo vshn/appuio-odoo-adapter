@@ -36,11 +36,14 @@ func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invo
 			line := opts.invoiceLineDefaults
 			line.CategoryID = categoryID
 
-			total := math.Round(item.Total*100) / 100
-			line.Name = fmt.Sprintf("%s Qty: %.2f %s, PPU: %.10f, Disc: %.0f%%",
-				item.Description, item.Quantity, item.Unit, item.PricePerUnit, item.Discount*float64(100))
+			name, err := opts.ItemDescriptionRenderer().RenderItemDescription(ctx, item)
+			if err != nil {
+				return 0, fmt.Errorf("error rendering line template: %w", err)
+			}
 
-			line.PricePerUnit = total
+			line.Name = name
+
+			line.PricePerUnit = (math.Round(item.Total*100) / 100)
 			line.Quantity = 1
 			line.Discount = 0
 

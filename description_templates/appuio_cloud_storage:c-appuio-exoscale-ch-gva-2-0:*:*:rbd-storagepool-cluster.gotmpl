@@ -1,0 +1,4 @@
+{{- $access := "RWO" -}}
+{{- $class  := "rbd-storagepool-cluster" -}}
+
+{{- template "_storage" dict "AccessMode" $access "StorageClassName" $class "Item" . -}}

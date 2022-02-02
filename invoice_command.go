@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/vshn/appuio-odoo-adapter/invoice"
+	"github.com/vshn/appuio-odoo-adapter/invoice/desctmpl"
 	"github.com/vshn/appuio-odoo-adapter/odoo"
 	"github.com/vshn/appuio-odoo-adapter/odoo/model"
 )
@@ -29,6 +30,8 @@ type invoiceCommand struct {
 	Month       time.Month
 
 	InvoiceDefaultsPath string
+
+	ItemDescriptionTemplatesPath string
 }
 
 var invoiceCommandName = "invoice"
@@ -49,6 +52,8 @@ func newinvoiceCommand() *cli.Command {
 				EnvVars: envVars("MONTH"), Destination: (*int)(&command.Month), Required: true},
 			&cli.StringFlag{Name: "invoice-defaults-path", Usage: "Path to a file with invoice defaults.",
 				EnvVars: envVars("INVOICE_DEFAULTS_PATH"), Destination: &command.InvoiceDefaultsPath, Required: false},
+			&cli.StringFlag{Name: "item-description-templates-path", Usage: "Path to a directory with templates. The Files must be named `PRODUCT_SOURCE.gotmpl`.",
+				EnvVars: envVars("ITEM_DESCRIPTION_TEMPLATES_PATH"), Destination: &command.ItemDescriptionTemplatesPath, Value: "description_templates/", Required: false},
 		},
 	}
 }
@@ -92,10 +97,16 @@ func (cmd *invoiceCommand) execute(context *cli.Context) error {
 		return err
 	}
 
+	descTemplates, err := desctmpl.ItemDescriptionTemplateRendererFromFS(os.DirFS(cmd.ItemDescriptionTemplatesPath), ".gotmpl")
+	if err != nil {
+		return fmt.Errorf("error loading templates for item description: %w", err)
+	}
+
 	for _, inv := range invoices {
 		id, err := invoice.CreateInvoice(ctx, o, inv,
 			invoice.WithInvoiceDefaults(invDefault),
 			invoice.WithInvoiceLineDefaults(invLineDefault),
+			invoice.WithItemDescriptionRenderer(descTemplates),
 		)
 		log.Info("Created invoice", "id", id)
 		if err != nil {

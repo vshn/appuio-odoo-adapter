@@ -1,0 +1,4 @@
+{{- $access := "RWO" -}}
+{{- $class  := "ssd" -}}
+
+{{- template "_storage" dict "AccessMode" $access "StorageClassName" $class "Item" . -}}

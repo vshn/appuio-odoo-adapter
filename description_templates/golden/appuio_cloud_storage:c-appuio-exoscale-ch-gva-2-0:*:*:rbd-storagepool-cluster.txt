@@ -1,0 +1,6 @@
+Persistent Storage
+
+Storage Type: RWO [rbd-storagepool-cluster]
+Qty: 87955674.09 UNIT-Minutes
+Average Usage: 7.61 UNIT / Minute
+Unit Price: CHF 0.0000007460 / UNIT / Minute

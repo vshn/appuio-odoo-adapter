@@ -1,0 +1,5 @@
+{{- define "_usage" -}}
+Qty: {{.Quantity | printf "%.2f"}} {{.Unit}}-Minutes
+Average Usage: {{.QuantityAvg | perMinute | printf "%.2f"}} {{.Unit}} / Minute
+Unit Price: CHF {{.PricePerUnit | printf "%.10f"}} / {{.Unit}} / Minute
+{{- end -}}
