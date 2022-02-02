@@ -3,7 +3,8 @@ module github.com/vshn/appuio-odoo-adapter
 go 1.17
 
 require (
-	github.com/appuio/appuio-cloud-reporting v0.2.1-0.20220202081414-8f064279e9da
+	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/appuio/appuio-cloud-reporting v0.3.0
 	github.com/go-logr/logr v1.2.2
 	github.com/go-logr/zapr v1.2.2
 	github.com/golang/mock v1.6.0
@@ -19,7 +20,6 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
