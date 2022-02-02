@@ -1,0 +1,6 @@
+{{- define "_storage" -}}
+Persistent Storage
+
+Storage Type: {{.AccessMode}} [{{.StorageClassName}}]
+{{template "_usage" .Item -}}
+{{- end -}}

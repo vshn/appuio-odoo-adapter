@@ -73,6 +73,10 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 	mockExecutor := odoomock.NewMockQueryExecutor(mockCtrl)
 
 	round := func(f float64) float64 { return math.Round(f*100) / 100 }
+	renderDesc := func(i invoice.Item) string {
+		s, _ := DefaultItemDescriptionRenderer{}.RenderItemDescription(context.Background(), i)
+		return s
+	}
 
 	// TODO directly mock api client instead of the underlying executor
 	invCreateCall := mockExecutor.
@@ -92,7 +96,7 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 			line := invoiceLineDefaults
 			line.CategoryID, _ = strconv.Atoi(subject.Categories[0].Target)
 
-			line.Name = "APPUiO Cloud Memory Qty: 1483434.78 MiB, PPU: 0.0000078000, Disc: 0%"
+			line.Name = renderDesc(subject.Categories[0].Items[0])
 			line.PricePerUnit = round(subject.Categories[0].Items[0].Total)
 			line.Quantity = 1
 			line.Discount = 0
@@ -106,7 +110,7 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 			line := invoiceLineDefaults
 			line.CategoryID, _ = strconv.Atoi(subject.Categories[1].Target)
 
-			line.Name = "APPUiO Cloud Memory Qty: 2455.00 MiB, PPU: 0.0000078000, Disc: 0%"
+			line.Name = renderDesc(subject.Categories[1].Items[0])
 			line.PricePerUnit = round(subject.Categories[1].Items[0].Total)
 			line.Quantity = 1
 			line.Discount = 0
@@ -120,7 +124,7 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 			line := invoiceLineDefaults
 			line.CategoryID, _ = strconv.Atoi(subject.Categories[1].Target)
 
-			line.Name = "APPUiO Cloud RWX Storage Qty: 100.00 GiB, PPU: 0.0003400000, Disc: 20%"
+			line.Name = renderDesc(subject.Categories[1].Items[1])
 			line.PricePerUnit = round(subject.Categories[1].Items[1].Total)
 			line.Quantity = 1
 			line.Discount = 0
