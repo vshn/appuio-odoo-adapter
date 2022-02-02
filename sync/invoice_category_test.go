@@ -1,6 +1,8 @@
 package sync
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/appuio/appuio-cloud-reporting/pkg/erp/entity"
@@ -105,6 +107,7 @@ func TestToInvoiceCategory(t *testing.T) {
 		givenCategory    entity.Category
 		expectedCategory model.InvoiceCategory
 		expectedError    string
+		mapper           ZoneNameMapper
 	}{
 		"GivenEmptyFields_ThenExpectDefaultFields": {
 			givenCategory:    entity.Category{},
@@ -121,6 +124,19 @@ func TestToInvoiceCategory(t *testing.T) {
 				SubTotal: true,
 			},
 		},
+		"GivenSource_AndMapper_ThenConvertName": {
+			givenCategory: entity.Category{Source: "zone:namespace"},
+			expectedCategory: model.InvoiceCategory{
+				Name:     "Zone: My lovely Zone - Namespace: namespace",
+				SubTotal: true,
+			},
+			mapper: testMapper{mapTo: "My lovely Zone"},
+		},
+		"GivenMapperReturningError_ThenExpectError": {
+			givenCategory: entity.Category{Source: "zone:namespace"},
+			mapper:        testMapper{err: errors.New("zero motivation")},
+			expectedError: "error mapping zone source \"zone\" to name: zero motivation",
+		},
 		"GivenInvalidSource_ThenExpectError": {
 			givenCategory: entity.Category{Source: "invalid"},
 			expectedError: "cannot parse source: invalid: expected format `cluster:namespace`",
@@ -132,7 +148,7 @@ func TestToInvoiceCategory(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			result, err := ToInvoiceCategory(tc.givenCategory)
+			result, err := ToInvoiceCategory(tc.givenCategory, tc.mapper)
 
 			if tc.expectedError != "" {
 				assert.EqualError(t, err, tc.expectedError)
@@ -177,4 +193,13 @@ func TestMergeWithInvoiceCategory(t *testing.T) {
 			assert.Equal(t, tc.expectedResult, result)
 		})
 	}
+}
+
+type testMapper struct {
+	mapTo string
+	err   error
+}
+
+func (s testMapper) MapZoneName(ctx context.Context, source string) (string, error) {
+	return s.mapTo, s.err
 }

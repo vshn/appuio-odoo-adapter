@@ -15,9 +15,16 @@ const (
 	elementSeparator = ":"
 )
 
+// ZoneNameMapper maps a zone source key to a human readable name.
+type ZoneNameMapper interface {
+	MapZoneName(ctx context.Context, source string) (string, error)
+}
+
 // InvoiceCategoryReconciler synchronizes various reporting facts with Odoo API.
 type InvoiceCategoryReconciler struct {
 	odoo *model.Odoo
+
+	ZoneNameMapper ZoneNameMapper
 }
 
 // NewInvoiceCategoryReconciler constructor.
@@ -34,7 +41,7 @@ func NewInvoiceCategoryReconciler(odoo *model.Odoo) *InvoiceCategoryReconciler {
 // Reconcile implements erp.CategoryReconciler.
 // Note: A logger is retrieved from logr.FromContextOrDiscard.
 func (r *InvoiceCategoryReconciler) Reconcile(ctx context.Context, category entity.Category) (entity.Category, error) {
-	ic, err := ToInvoiceCategory(category)
+	ic, err := ToInvoiceCategory(category, r.ZoneNameMapper)
 	if err != nil {
 		return entity.Category{}, err
 	}
@@ -78,7 +85,7 @@ func (r *InvoiceCategoryReconciler) updateCategoryIfNeeded(ctx context.Context, 
 //  The model.InvoiceCategory.ID is only set if the entity.Category.Target is a non-empty string.
 //  The model.InvoiceCategory.Name field is only set if entity.Category.Source is non-empty string.
 // Errors are returned if entity.Category.Target is not numeric or if parsing entity.Category.Source fails.
-func ToInvoiceCategory(category entity.Category) (model.InvoiceCategory, error) {
+func ToInvoiceCategory(category entity.Category, m ZoneNameMapper) (model.InvoiceCategory, error) {
 	id := 0
 	if category.Target != "" {
 		parsed, err := strconv.Atoi(category.Target)
@@ -93,7 +100,15 @@ func ToInvoiceCategory(category entity.Category) (model.InvoiceCategory, error) 
 		if len(arr) < 2 {
 			return model.InvoiceCategory{}, fmt.Errorf("cannot parse source: %s: expected format `cluster:namespace`", category.Source)
 		}
-		name = fmt.Sprintf("Zone: %s - Namespace: %s", arr[0], arr[1])
+		zone := arr[0]
+		if m != nil {
+			mapped, err := m.MapZoneName(context.Background(), zone)
+			if err != nil {
+				return model.InvoiceCategory{}, fmt.Errorf("error mapping zone source %q to name: %w", zone, err)
+			}
+			zone = mapped
+		}
+		name = fmt.Sprintf("Zone: %s - Namespace: %s", zone, arr[1])
 	}
 	return model.InvoiceCategory{
 		ID:        id,
