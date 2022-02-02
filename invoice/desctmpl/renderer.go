@@ -2,7 +2,6 @@ package desctmpl
 
 import (
 	"context"
-	_ "embed"
 	"io/fs"
 	"strings"
 	"text/template"
