@@ -79,11 +79,12 @@ func (t invoiceLineDefaults) set(o *options) {
 	o.invoiceLineDefaults = model.InvoiceLine(t)
 }
 
+// ItemDescriptionRenderer is the interface used to render an item description.
 type ItemDescriptionRenderer interface {
 	RenderItemDescription(context.Context, invoice.Item) (string, error)
 }
 
-// WithInvoiceLineDescriptionTemplate sets the description for an invoice line.
+// WithItemDescriptionRenderer sets the description renderer for an invoice line.
 func WithItemDescriptionRenderer(tm ItemDescriptionRenderer) Option {
 	return itemDescriptionRendererOpt{tm}
 }
