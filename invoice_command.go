@@ -97,7 +97,7 @@ func (cmd *invoiceCommand) execute(context *cli.Context) error {
 		return err
 	}
 
-	descTemplates, err := desctmpl.ItemDescriptionTemplateRendererFromFS(os.DirFS(cmd.ItemDescriptionTemplatesPath), "*.gotmpl")
+	descTemplates, err := desctmpl.ItemDescriptionTemplateRendererFromFS(os.DirFS(cmd.ItemDescriptionTemplatesPath), ".gotmpl")
 	if err != nil {
 		return fmt.Errorf("error loading templates for item description: %w", err)
 	}
