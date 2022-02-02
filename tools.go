@@ -6,8 +6,6 @@
 package tools
 
 import (
-	// To have kind updated via Renovate.
-	_ "sigs.k8s.io/kind"
 	// To generate mocks
 	_ "github.com/golang/mock/mockgen"
 )
