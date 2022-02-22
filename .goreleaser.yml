@@ -28,6 +28,8 @@ dockers:
   - "--platform=linux/amd64"
   image_templates:
   - "{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:v{{ .Version }}-amd64"
+  extra_files:
+  - zone-names.yaml
 
 - goarch: arm64
   use: buildx
@@ -35,6 +37,8 @@ dockers:
     - "--platform=linux/arm64/v8"
   image_templates:
   - "{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:v{{ .Version }}-arm64"
+  extra_files:
+  - zone-names.yaml
 
 docker_manifests:
   ## ghcr.io
