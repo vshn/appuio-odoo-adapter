@@ -10,4 +10,6 @@ RUN \
 ENTRYPOINT ["appuio-odoo-adapter"]
 COPY appuio-odoo-adapter /usr/bin/
 
+COPY zone-names.yaml .
+
 USER 65536:0
