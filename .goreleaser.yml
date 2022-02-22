@@ -30,6 +30,7 @@ dockers:
   - "{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:v{{ .Version }}-amd64"
   extra_files:
   - zone-names.yaml
+  - description_templates
 
 - goarch: arm64
   use: buildx
@@ -39,6 +40,7 @@ dockers:
   - "{{ .Env.REGISTRY }}/{{ .Env.IMAGE_NAME }}:v{{ .Version }}-arm64"
   extra_files:
   - zone-names.yaml
+  - description_templates
 
 docker_manifests:
   ## ghcr.io

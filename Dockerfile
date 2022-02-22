@@ -12,5 +12,6 @@ ENTRYPOINT ["appuio-odoo-adapter"]
 COPY appuio-odoo-adapter /usr/bin/
 
 COPY zone-names.yaml .
+COPY description_templates/*.gotmpl description_templates/
 
 USER 65536:0
