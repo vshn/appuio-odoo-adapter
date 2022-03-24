@@ -6,11 +6,15 @@ import (
 	"github.com/vshn/appuio-odoo-adapter/odoo"
 )
 
+// Partner represents a partner ("Customer") record in Odoo
 type Partner struct {
-	ID   int    `json:"id,omitempty" yaml:"id,omitempty"`
+	// ID is the data record identifier.
+	ID int `json:"id,omitempty" yaml:"id,omitempty"`
+	// Name is the display name of the partner.
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 }
 
+// PartnerList holds the search results for Partner for deserialization
 type PartnerList struct {
 	Items []Partner `json:"records"`
 }
