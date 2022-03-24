@@ -2,6 +2,7 @@ package invoice_test
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strconv"
 	"testing"
@@ -79,6 +80,17 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 	}
 
 	// TODO directly mock api client instead of the underlying executor
+	partnerQueryCall := mockExecutor.
+		EXPECT().
+		SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
+		Do(func(ctx context.Context, s odoo.SearchReadModel, into interface{}) error {
+			pl, ok := into.(*model.PartnerList)
+			if !ok {
+				return fmt.Errorf("Expected into to be of type *model.PartnerList")
+			}
+			pl.Items = append(pl.Items, model.Partner{ID: 19680000, Name: "Umbrella Corp Ltd."})
+			return nil
+		})
 	invCreateCall := mockExecutor.
 		EXPECT().
 		CreateGenericModel(context.Background(), "account.invoice", func() model.Invoice {
@@ -86,7 +98,7 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 			inv.Date = odoo.Date(invoiceDate)
 
 			inv.PartnerID, _ = strconv.Atoi(subject.Tenant.Target)
-			inv.Name = "APPUiO Cloud December 2021"
+			inv.Name = "Umbrella Corp Ltd. APPUiO Cloud December 2021"
 			return inv
 		}())
 
@@ -142,6 +154,7 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 		})
 
 	gomock.InOrder(
+		partnerQueryCall,
 		invCreateCall,
 		line1Create,
 		line2Create,
