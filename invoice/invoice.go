@@ -23,6 +23,9 @@ func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invo
 	if err != nil {
 		return 0, fmt.Errorf("error fetching partner info from Odoo: %w", err)
 	}
+	if partner == nil {
+		return 0, fmt.Errorf("partner with id \"%d\" could not be found", partnerID)
+	}
 
 	name := fmt.Sprintf("%s APPUiO Cloud %s %d", partner.Name, invoice.PeriodStart.Month(), invoice.PeriodStart.Year())
 	toCreate := opts.invoiceDefaults
