@@ -15,15 +15,22 @@ import (
 func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invoice, options ...Option) (int, error) {
 	opts := buildOptions(options)
 
-	name := fmt.Sprintf("APPUiO Cloud %s %d", invoice.PeriodStart.Month(), invoice.PeriodStart.Year())
-	toCreate := opts.invoiceDefaults
-	toCreate.Name = name
-	toCreate.Date = odoo.Date(opts.InvoiceDateOrNow())
-
 	partnerID, err := strconv.Atoi(invoice.Tenant.Target)
 	if err != nil {
 		return 0, fmt.Errorf("error converting tenant target to int: %w", err)
 	}
+	partner, err := client.FetchPartnerByID(ctx, partnerID)
+	if err != nil {
+		return 0, fmt.Errorf("error fetching partner info from Odoo: %w", err)
+	}
+	if partner == nil {
+		return 0, fmt.Errorf("partner with id \"%d\" could not be found", partnerID)
+	}
+
+	name := fmt.Sprintf("%s APPUiO Cloud %s %d", partner.Name, invoice.PeriodStart.Month(), invoice.PeriodStart.Year())
+	toCreate := opts.invoiceDefaults
+	toCreate.Name = name
+	toCreate.Date = odoo.Date(opts.InvoiceDateOrNow())
 	toCreate.PartnerID = partnerID
 
 	lines := make([]model.InvoiceLine, 0)
