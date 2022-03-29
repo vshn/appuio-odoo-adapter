@@ -32,6 +32,7 @@ func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invo
 	toCreate.Name = name
 	toCreate.Date = odoo.Date(opts.InvoiceDateOrNow())
 	toCreate.PartnerID = partnerID
+	toCreate.PaymentTermID = partner.PaymentTerm.ID
 
 	lines := make([]model.InvoiceLine, 0)
 	for _, category := range invoice.Categories {

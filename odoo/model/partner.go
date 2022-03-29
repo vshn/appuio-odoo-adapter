@@ -12,6 +12,8 @@ type Partner struct {
 	ID int `json:"id,omitempty" yaml:"id,omitempty"`
 	// Name is the display name of the partner.
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	// PaymentTerm holds the terms of payment for the partner
+	PaymentTerm PartnerPaymentTerm `json:"property_payment_term,omitempty" yaml:"property_payment_term,omitempty"`
 }
 
 // PartnerList holds the search results for Partner for deserialization
@@ -40,7 +42,7 @@ func (o Odoo) searchPartners(ctx context.Context, domainFilters []odoo.Filter) (
 	err := o.querier.SearchGenericModel(ctx, odoo.SearchReadModel{
 		Model:  "res.partner",
 		Domain: domainFilters,
-		Fields: []string{"name"},
+		Fields: []string{"name", "property_payment_term"},
 	}, result)
 	return result.Items, err
 }
