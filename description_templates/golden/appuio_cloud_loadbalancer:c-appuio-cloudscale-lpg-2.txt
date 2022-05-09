@@ -2,6 +2,4 @@ Service Type LoadBalancer
 
 Qty: 87955674.09 UNIT-Minutes
 Average Usage: 7.61 UNIT / Minute
-Average Memory requests: 0.70 TPS / Minute
-Average CPU requests in memory request equivalent: 0.70 TPS / Minute
 Unit Price: CHF 0.0000007460 / UNIT / Minute

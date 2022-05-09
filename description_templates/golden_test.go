@@ -47,6 +47,7 @@ func TestGenerateGolden(t *testing.T) {
 
 	baseItem := invoice.Item{
 		Description: "Long form query description",
+		QueryName:   "default_query",
 		ProductRef: invoice.ProductRef{
 			Target: "1919",
 			Source: "SET ME",
@@ -59,20 +60,22 @@ func TestGenerateGolden(t *testing.T) {
 		PricePerUnit: 0.000000746,
 		Discount:     0.33,
 		Total:        43.962005025946798,
-		SubItems: []invoice.SubItem{
-			{
-				Description: "Memory requests",
+		SubItems: map[string]invoice.SubItem{
+			"appuio_cloud_memory_subquery_memory_request": {
+				Description: "Memory request aggregated by namespace",
+				QueryName:   "appuio_cloud_memory_subquery_memory_request",
 				Quantity:    34923234.04433424,
 				QuantityMin: 2.251,
 				QuantityAvg: 42.2,
 				QuantityMax: 9001.1,
 				Unit:        "TPS",
 			},
-			{
+			"appuio_cloud_memory_subquery_cpu_request": {
 				Description: "CPU requests in memory request equivalent",
-				Quantity:    34923234.04433424,
+				QueryName:   "appuio_cloud_memory_subquery_cpu_request",
+				Quantity:    44323235.04444221,
 				QuantityMin: 2.251,
-				QuantityAvg: 42.2,
+				QuantityAvg: 133.7,
 				QuantityMax: 9001.1,
 				Unit:        "TPS",
 			},
