@@ -37,7 +37,6 @@ func TestGenerateGolden(t *testing.T) {
 	baseItem := invoice.Item{
 		Description: "Long form query description",
 		ProductRef: invoice.ProductRef{
-			ID:     "14954680-459B-4A85-8B8D-1EEED2627409",
 			Target: "1919",
 			Source: "SET ME",
 		},
@@ -49,6 +48,24 @@ func TestGenerateGolden(t *testing.T) {
 		PricePerUnit: 0.000000746,
 		Discount:     0.33,
 		Total:        43.962005025946798,
+		SubItems: []invoice.SubItem{
+			{
+				Description: "Memory requests",
+				Quantity:    34923234.04433424,
+				QuantityMin: 2.251,
+				QuantityAvg: 42.2,
+				QuantityMax: 9001.1,
+				Unit:        "TPS",
+			},
+			{
+				Description: "CPU requests in memory request equivalent",
+				Quantity:    34923234.04433424,
+				QuantityMin: 2.251,
+				QuantityAvg: 42.2,
+				QuantityMax: 9001.1,
+				Unit:        "TPS",
+			},
+		},
 	}
 
 	for _, key := range sourceKeys {
