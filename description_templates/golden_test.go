@@ -2,6 +2,8 @@ package descriptiontemplates_test
 
 import (
 	"context"
+	"flag"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -9,14 +11,23 @@ import (
 	"testing"
 
 	"github.com/appuio/appuio-cloud-reporting/pkg/invoice"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vshn/appuio-odoo-adapter/invoice/desctmpl"
 )
 
 const extension = ".gotmpl"
 
+var (
+	updateGolden = flag.Bool("update", false, "update the golden files of this test")
+)
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	os.Exit(m.Run())
+}
+
 func TestGenerateGolden(t *testing.T) {
-	os.RemoveAll("golden")
 	os.Mkdir("golden", os.ModePerm)
 
 	templateFS := os.DirFS(".")
@@ -72,10 +83,21 @@ func TestGenerateGolden(t *testing.T) {
 		t.Run(key, func(t *testing.T) {
 			item := baseItem
 			item.ProductRef.Source = key
-			rendered, err := r.RenderItemDescription(context.Background(), item)
+			actual, err := r.RenderItemDescription(context.Background(), item)
 			require.NoError(t, err)
 
-			os.WriteFile(filepath.Join("golden", key+".txt"), []byte(rendered), os.ModePerm)
+			fileName := filepath.Join("golden", key+".txt")
+			if *updateGolden {
+				require.NoError(t, os.WriteFile(fileName, []byte(actual), os.ModePerm))
+				return
+			}
+			f, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
+			require.NoErrorf(t, err, "failed to open golden file %s", fileName)
+			defer f.Close()
+			expected, err := io.ReadAll(f)
+			require.NoErrorf(t, err, "failed to read golden file %s", fileName)
+
+			assert.Equal(t, string(expected), actual)
 		})
 	}
 }
