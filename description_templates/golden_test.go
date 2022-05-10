@@ -86,6 +86,11 @@ func TestGenerateGolden(t *testing.T) {
 		t.Run(key, func(t *testing.T) {
 			item := baseItem
 			item.ProductRef.Source = key
+			if key == "appuio_cloud_memory:c-appuio-exoscale-ch-gva-2-0" {
+				// Tests that we don't crash if SubItems are missing
+				item.SubItems = map[string]invoice.SubItem{}
+			}
+
 			actual, err := r.RenderItemDescription(context.Background(), item)
 			require.NoError(t, err)
 
