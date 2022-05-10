@@ -1,6 +1,6 @@
-{{template "_compute" . -}}
+{{- template "_compute" . -}}
 {{- define "_compute" -}}
-{{$s:="\u2001"}}{{/*We need to use unicode whitespaces to make Odoo render them*/}}
+{{- $s:="\u2001" -}}{{- /*We need to use unicode whitespaces to make Odoo render them*/ -}}
 Compute
 
 Qty: {{.Quantity | printf "%.2f"}} {{.Unit}}-Minutes
