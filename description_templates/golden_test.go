@@ -28,6 +28,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestGenerateGolden(t *testing.T) {
+	if *updateGolden {
+		require.NoError(t, os.RemoveAll("golden"))
+	}
+
 	os.Mkdir("golden", os.ModePerm)
 
 	templateFS := os.DirFS(".")
