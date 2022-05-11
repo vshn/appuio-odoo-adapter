@@ -1,0 +1,15 @@
+{{- template "_compute" . -}}
+{{- define "_compute" -}}
+{{- $s:="\u2001" -}}{{- /*We need to use unicode whitespaces to make Odoo render them*/ -}}
+Compute
+
+Qty: {{.Quantity | printf "%.2f"}} {{.Unit}}-Minutes
+Average Usage: {{.QuantityAvg | perMinute | printf "%.2f"}} {{.Unit}} / Minute
+{{if .SubItems.appuio_cloud_memory_subquery_memory_request -}}
+{{$s}}Memory Requests: {{.SubItems.appuio_cloud_memory_subquery_memory_request.QuantityAvg | perMinute | printf "%.2f"}} {{.Unit}} / Minute
+{{end -}}
+{{if .SubItems.appuio_cloud_memory_subquery_cpu_request -}}
+{{$s}}CPU Requests: {{.SubItems.appuio_cloud_memory_subquery_cpu_request.QuantityAvg | perMinute | printf "%.2f"}} {{.Unit}} / Minute
+{{end -}}
+Unit Price: CHF {{.PricePerUnit | printf "%.10f"}} / {{.Unit}} / Minute
+{{- end -}}

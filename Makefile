@@ -40,6 +40,10 @@ test: test-go ## All-in-one test
 test-go: ## Run unit tests against code
 	go test -race -coverprofile cover.out -covermode atomic ./...
 
+.PHONY: gen-golden
+gen-golden:
+	go test ./description_templates/... -update
+
 .PHONY: fmt
 fmt: ## Run 'go fmt' against code
 	go fmt ./...
