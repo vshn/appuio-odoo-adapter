@@ -1,6 +1,6 @@
 name: appuio-odoo-adapter
 title: Odoo Adapter
-version: master
+version: "1.2"
 start_page: ROOT:index.adoc
 nav:
   - modules/ROOT/nav.adoc
