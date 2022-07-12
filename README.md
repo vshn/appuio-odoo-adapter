@@ -1,5 +1,7 @@
 # Odoo Adapter for APPUiO Cloud
 
+Test closing.
+
 [![Build](https://img.shields.io/github/workflow/status/vshn/appuio-odoo-adapter/Test)][build]
 ![Go version](https://img.shields.io/github/go-mod/go-version/vshn/appuio-odoo-adapter)
 [![Version](https://img.shields.io/github/v/release/vshn/appuio-odoo-adapter)][releases]
