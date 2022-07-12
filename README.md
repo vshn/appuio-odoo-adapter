@@ -1,3 +1,5 @@
+Test
+
 # Odoo Adapter for APPUiO Cloud
 
 [![Build](https://img.shields.io/github/workflow/status/vshn/appuio-odoo-adapter/Test)][build]
