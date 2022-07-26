@@ -1,0 +1,7 @@
+{{- template "_s3_storage" . -}}
+{{- define "_s3_storage" -}}
+Object Storage - Storage (cloudscale.ch)
+
+Qty: {{ .Quantity | printf "%.2f" }} {{ .Unit }}
+Price: CHF {{.PricePerUnit | printf "%.4f" }} / {{ .Unit }}
+{{- end -}}

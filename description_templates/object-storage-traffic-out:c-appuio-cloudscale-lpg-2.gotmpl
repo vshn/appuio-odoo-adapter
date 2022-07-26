@@ -1,0 +1,7 @@
+{{- template "_s3_traffic_out" . -}}
+{{- define "_s3_traffic_out" -}}
+Object Storage - Traffic Out (cloudscale.ch)
+
+Qty: {{ .Quantity | printf "%.2f" }} {{ .Unit }}
+Price: CHF {{.PricePerUnit | printf "%.4f" }} / {{ .Unit }}
+{{- end -}}
