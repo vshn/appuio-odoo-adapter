@@ -3,7 +3,7 @@ dist/
 .github/release-notes.md
 
 # Build
-odoo-adapter
+appuio-odoo-adapter
 *.out
 
 # Docs
@@ -15,3 +15,8 @@ node_modules/
 .kind/
 
 .vscode/
+
+.idea/
+
+# configuration
+env
