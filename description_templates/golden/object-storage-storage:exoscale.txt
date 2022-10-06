@@ -1,4 +1,4 @@
-Object Storage - Traffic Out (cloudscale.ch)
+Object Storage - Storage (Exoscale)
 
 Qty: 87955674.09 UNIT
 Price: CHF 0.0000 / UNIT

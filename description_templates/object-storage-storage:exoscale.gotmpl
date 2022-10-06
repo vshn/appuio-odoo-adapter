@@ -1,0 +1,7 @@
+{{- template "_s3_storage_exoscale" . -}}
+{{- define "_s3_storage_exoscale" -}}
+Object Storage - Storage (Exoscale)
+
+Qty: {{ .Quantity | printf "%.2f" }} {{ .Unit }}
+Price: CHF {{.PricePerUnit | printf "%.4f" }} / {{ .Unit }}
+{{- end -}}
