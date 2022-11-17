@@ -47,9 +47,9 @@ func newinvoiceCommand() *cli.Command {
 			newDatabaseURLFlag(&command.DatabaseURL),
 
 			&cli.IntFlag{Name: "year", Usage: "Year to generate the report for.",
-				EnvVars: envVars("YEAR"), Destination: &command.Year, Required: true},
+				EnvVars: envVars("YEAR"), Destination: &command.Year, Required: true, Base: 10},
 			&cli.IntFlag{Name: "month", Usage: "Month to generate the report for.",
-				EnvVars: envVars("MONTH"), Destination: (*int)(&command.Month), Required: true},
+				EnvVars: envVars("MONTH"), Destination: (*int)(&command.Month), Required: true, Base: 10},
 			&cli.StringFlag{Name: "invoice-defaults-path", Usage: "Path to a file with invoice defaults.",
 				EnvVars: envVars("INVOICE_DEFAULTS_PATH"), Destination: &command.InvoiceDefaultsPath, Required: false},
 			&cli.StringFlag{Name: "item-description-templates-path", Usage: "Path to a directory with templates. The Files must be named `PRODUCT_SOURCE.gotmpl`.",
