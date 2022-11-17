@@ -33,11 +33,12 @@ func NewInvoiceCategoryReconciler(odoo *model.Odoo) *InvoiceCategoryReconciler {
 }
 
 // Reconcile synchronizes model.InvoiceCategory in Odoo based on the given entity.Category according to the following rules:
-//  * If entity.Category.Target is empty then it will create a new model.InvoiceCategory and set entity.Category.Target to the ID returned by Odoo.
-//  * If entity.Category.Target has a value then it will search for a matching model.InvoiceCategory:
-//    * If not found, it will return an error.
-//    * If found and model.InvoiceCategory is up-to-date, it will return without error (noop).
-//    * If found and model.InvoiceCategory has other properties than desired, the model.InvoiceCategory is updated/reset.
+//   - If entity.Category.Target is empty then it will create a new model.InvoiceCategory and set entity.Category.Target to the ID returned by Odoo.
+//   - If entity.Category.Target has a value then it will search for a matching model.InvoiceCategory:
+//   - If not found, it will return an error.
+//   - If found and model.InvoiceCategory is up-to-date, it will return without error (noop).
+//   - If found and model.InvoiceCategory has other properties than desired, the model.InvoiceCategory is updated/reset.
+//
 // Reconcile implements erp.CategoryReconciler.
 // Note: A logger is retrieved from logr.FromContextOrDiscard.
 func (r *InvoiceCategoryReconciler) Reconcile(ctx context.Context, category entity.Category) (entity.Category, error) {
@@ -82,8 +83,10 @@ func (r *InvoiceCategoryReconciler) updateCategoryIfNeeded(ctx context.Context, 
 }
 
 // ToInvoiceCategory writes compatible fields of an existing entity.Category into the given model.InvoiceCategory.
-//  The model.InvoiceCategory.ID is only set if the entity.Category.Target is a non-empty string.
-//  The model.InvoiceCategory.Name field is only set if entity.Category.Source is non-empty string.
+//
+//	The model.InvoiceCategory.ID is only set if the entity.Category.Target is a non-empty string.
+//	The model.InvoiceCategory.Name field is only set if entity.Category.Source is non-empty string.
+//
 // Errors are returned if entity.Category.Target is not numeric or if parsing entity.Category.Source fails.
 func ToInvoiceCategory(category entity.Category, m ZoneNameMapper) (model.InvoiceCategory, error) {
 	id := 0
@@ -121,8 +124,9 @@ func ToInvoiceCategory(category entity.Category, m ZoneNameMapper) (model.Invoic
 }
 
 // MergeWithInvoiceCategory writes compatible fields of an existing model.InvoiceCategory into the given entity.Category.
-//  The entity.Category.Target field is only set if the model.InvoiceCategory.ID is non-zero.
-//  The entity.Category.Source field is only set if model.InvoiceCategory.Name is non-empty string.
+//
+//	The entity.Category.Target field is only set if the model.InvoiceCategory.ID is non-zero.
+//	The entity.Category.Source field is only set if model.InvoiceCategory.Name is non-empty string.
 func MergeWithInvoiceCategory(current entity.Category, category model.InvoiceCategory) entity.Category {
 	target := current.Target
 	if category.ID != 0 {
