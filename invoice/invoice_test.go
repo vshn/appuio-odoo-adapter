@@ -28,11 +28,12 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 		AccountID: 7666,
 	}
 
+	partnerId := 19680000
 	subject := invoice.Invoice{
 		PeriodStart: time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC),
 		Tenant: invoice.Tenant{
 			Source: "umbrellacorp",
-			Target: "19680000",
+			Target: strconv.FormatInt(int64(partnerId), 10),
 		},
 		Categories: []invoice.Category{
 			{Source: "us-rac-2:disposal-plant-p-12a-furnace-control", Target: "19680010", Items: []invoice.Item{
@@ -73,93 +74,13 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 	defer mockCtrl.Finish()
 	mockExecutor := odoomock.NewMockQueryExecutor(mockCtrl)
 
-	round := func(f float64) float64 { return math.Round(f*100) / 100 }
-	renderDesc := func(i invoice.Item) string {
-		s, _ := DefaultItemDescriptionRenderer{}.RenderItemDescription(context.Background(), i)
-		return s
-	}
-
-	// TODO directly mock api client instead of the underlying executor
-	partnerQueryCall := mockExecutor.
-		EXPECT().
-		SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
-		Do(func(ctx context.Context, s odoo.SearchReadModel, into interface{}) error {
-			pl, ok := into.(*model.PartnerList)
-			if !ok {
-				return fmt.Errorf("Expected into to be of type *model.PartnerList")
-			}
-			pl.Items = append(pl.Items, model.Partner{ID: 19680000, Name: "Umbrella Corp Ltd."})
-			return nil
-		})
-	invCreateCall := mockExecutor.
-		EXPECT().
-		CreateGenericModel(context.Background(), "account.invoice", func() model.Invoice {
-			inv := invoiceDefaults
-			inv.Date = odoo.Date(invoiceDate)
-
-			inv.PartnerID, _ = strconv.Atoi(subject.Tenant.Target)
-			inv.Name = "Umbrella Corp Ltd. APPUiO Cloud December 2021"
-			return inv
-		}())
-
-	line1Create := mockExecutor.
-		EXPECT().
-		CreateGenericModel(context.Background(), "account.invoice.line", func() model.InvoiceLine {
-			line := invoiceLineDefaults
-			line.CategoryID, _ = strconv.Atoi(subject.Categories[0].Target)
-
-			line.Name = renderDesc(subject.Categories[0].Items[0])
-			line.PricePerUnit = round(subject.Categories[0].Items[0].Total)
-			line.Quantity = 1
-			line.Discount = 0
-
-			line.ProductID, _ = strconv.Atoi(subject.Categories[0].Items[0].ProductRef.Target)
-			return line
-		}())
-	line2Create := mockExecutor.
-		EXPECT().
-		CreateGenericModel(context.Background(), "account.invoice.line", func() model.InvoiceLine {
-			line := invoiceLineDefaults
-			line.CategoryID, _ = strconv.Atoi(subject.Categories[1].Target)
-
-			line.Name = renderDesc(subject.Categories[1].Items[0])
-			line.PricePerUnit = round(subject.Categories[1].Items[0].Total)
-			line.Quantity = 1
-			line.Discount = 0
-
-			line.ProductID, _ = strconv.Atoi(subject.Categories[1].Items[0].ProductRef.Target)
-			return line
-		}())
-	line3Create := mockExecutor.
-		EXPECT().
-		CreateGenericModel(context.Background(), "account.invoice.line", func() model.InvoiceLine {
-			line := invoiceLineDefaults
-			line.CategoryID, _ = strconv.Atoi(subject.Categories[1].Target)
-
-			line.Name = renderDesc(subject.Categories[1].Items[1])
-			line.PricePerUnit = round(subject.Categories[1].Items[1].Total)
-			line.Quantity = 1
-			line.Discount = 0
-
-			line.ProductID, _ = strconv.Atoi(subject.Categories[1].Items[1].ProductRef.Target)
-			return line
-		}())
-
-	calculateTaxCall := mockExecutor.
-		EXPECT().
-		ExecuteQuery(context.Background(), "/web/dataset/call_kw/button_reset_taxes", gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _ string, _ interface{}, ok *bool) error {
-			*ok = true
-			return nil
-		})
-
 	gomock.InOrder(
-		partnerQueryCall,
-		invCreateCall,
-		line1Create,
-		line2Create,
-		line3Create,
-		calculateTaxCall,
+		mockPartnerQueryCall(mockExecutor, model.Partner{ID: partnerId, Name: "Umbrella Corp Ltd."}),
+		mockInvoiceCreateCall(mockExecutor, invoiceDefaults, invoiceDate, partnerId, "Umbrella Corp Ltd. APPUiO Cloud December 2021"),
+		mockInvoiceLineCreateCall(mockExecutor, invoiceLineDefaults, subject.Categories[0], subject.Categories[0].Items[0]),
+		mockInvoiceLineCreateCall(mockExecutor, invoiceLineDefaults, subject.Categories[1], subject.Categories[1].Items[0]),
+		mockInvoiceLineCreateCall(mockExecutor, invoiceLineDefaults, subject.Categories[1], subject.Categories[1].Items[1]),
+		mockCalculateTaxCall(mockExecutor),
 	)
 
 	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject,
@@ -168,4 +89,106 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 		WithInvoiceLineDefaults(invoiceLineDefaults),
 	)
 	require.NoError(t, err)
+}
+
+func TestOdooInvoiceCreator_CreateInvoiceWithParentID(t *testing.T) {
+	invoiceDate := time.Now()
+
+	invoiceDefaults := model.Invoice{
+		AccountID: 666,
+	}
+	invoiceLineDefaults := model.InvoiceLine{
+		AccountID: 7666,
+	}
+
+	partnerId := 19680000
+	subject := invoice.Invoice{
+		PeriodStart: time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC),
+		Tenant: invoice.Tenant{
+			Source: "umbrellacorp",
+			Target: strconv.FormatInt(int64(partnerId), 10),
+		},
+		Categories: []invoice.Category{},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockExecutor := odoomock.NewMockQueryExecutor(mockCtrl)
+
+	gomock.InOrder(
+		mockPartnerQueryCall(mockExecutor, model.Partner{
+			ID:     1111111111111111111,
+			Name:   "Umbrella Corp Ltd. Billing Department",
+			Parent: model.OdooCompositeID{Valid: true, ID: 19680000, Name: "Umbrella Corp Ltd."},
+		}),
+		mockInvoiceCreateCall(mockExecutor, invoiceDefaults, invoiceDate, partnerId, "Umbrella Corp Ltd. APPUiO Cloud December 2021"),
+		mockCalculateTaxCall(mockExecutor),
+	)
+
+	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject,
+		WithInvoiceDate(invoiceDate),
+		WithInvoiceDefaults(invoiceDefaults),
+		WithInvoiceLineDefaults(invoiceLineDefaults),
+	)
+	require.NoError(t, err)
+}
+
+func mockPartnerQueryCall(mockExecutor *odoomock.MockQueryExecutor, partner model.Partner) *gomock.Call {
+	return mockExecutor.
+		EXPECT().
+		SearchGenericModel(gomock.Any(), gomock.Any(), gomock.Any()).
+		Do(func(ctx context.Context, s odoo.SearchReadModel, into interface{}) error {
+			pl, ok := into.(*model.PartnerList)
+			if !ok {
+				return fmt.Errorf("Expected into to be of type *model.PartnerList")
+			}
+			pl.Items = append(pl.Items, partner)
+			return nil
+		})
+}
+
+func mockInvoiceCreateCall(mockExecutor *odoomock.MockQueryExecutor, defaults model.Invoice, date time.Time, partnerId int, name string) *gomock.Call {
+	return mockExecutor.
+		EXPECT().
+		CreateGenericModel(context.Background(), "account.invoice", func() model.Invoice {
+			inv := defaults
+			inv.Date = odoo.Date(date)
+
+			inv.PartnerID = partnerId
+			inv.Name = name
+			return inv
+		}())
+}
+
+func mockCalculateTaxCall(mockExecutor *odoomock.MockQueryExecutor) *gomock.Call {
+	return mockExecutor.
+		EXPECT().
+		ExecuteQuery(context.Background(), "/web/dataset/call_kw/button_reset_taxes", gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _ string, _ interface{}, ok *bool) error {
+			*ok = true
+			return nil
+		})
+}
+
+func mockInvoiceLineCreateCall(mockExecutor *odoomock.MockQueryExecutor, defaults model.InvoiceLine, category invoice.Category, item invoice.Item) *gomock.Call {
+	round := func(f float64) float64 { return math.Round(f*100) / 100 }
+	renderDesc := func(i invoice.Item) string {
+		s, _ := DefaultItemDescriptionRenderer{}.RenderItemDescription(context.Background(), i)
+		return s
+	}
+
+	return mockExecutor.
+		EXPECT().
+		CreateGenericModel(context.Background(), "account.invoice.line", func() model.InvoiceLine {
+			line := defaults
+			line.CategoryID, _ = strconv.Atoi(category.Target)
+
+			line.Name = renderDesc(item)
+			line.PricePerUnit = round(item.Total)
+			line.Quantity = 1
+			line.Discount = 0
+
+			line.ProductID, _ = strconv.Atoi(item.ProductRef.Target)
+			return line
+		}())
 }
