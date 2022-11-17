@@ -1,0 +1,8 @@
+Compute [flex]
+
+Qty: 87955674.09 UNIT-Minutes
+Unit Price: CHF 0.0000007460 / UNIT / Minute
+--
+Average Usage: 7.61 UNIT / Minute
+↳ Memory Requests: 0.70 UNIT / Minute
+↳ Compensation for excess CPU Requests: 2.23 UNIT / Minute
