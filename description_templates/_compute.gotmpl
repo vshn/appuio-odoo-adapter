@@ -1,15 +1,18 @@
 {{- template "_compute" . -}}
 {{- define "_compute" -}}
-Compute
 
-Qty: {{ .Quantity | printf "%.2f" }} {{ .Unit }}-Minutes
-Unit Price: CHF {{.PricePerUnit | printf "%.10f" }} / {{ .Unit }} / Minute
+Compute
+{{- if .ComputeClass }} [{{ .ComputeClass }}]
+{{- end }}
+
+Qty: {{ .Item.Quantity | printf "%.2f" }} {{ .Item.Unit }}-Minutes
+Unit Price: CHF {{ .Item.PricePerUnit | printf "%.10f" }} / {{ .Item.Unit }} / Minute
 --
-Average Usage: {{ .QuantityAvg | perMinute | printf "%.2f" }} {{ .Unit }} / Minute
-{{ if .SubItems.appuio_cloud_memory_subquery_memory_request -}}
-↳ Memory Requests: {{ .SubItems.appuio_cloud_memory_subquery_memory_request.QuantityAvg | perMinute | printf "%.2f" }} {{ .Unit }} / Minute
+Average Usage: {{ .Item.QuantityAvg | perMinute | printf "%.2f" }} {{ .Item.Unit }} / Minute
+{{ if .Item.SubItems.appuio_cloud_memory_subquery_memory_request -}}
+↳ Memory Requests: {{ .Item.SubItems.appuio_cloud_memory_subquery_memory_request.QuantityAvg | perMinute | printf "%.2f" }} {{ .Item.Unit }} / Minute
 {{ end -}}
-{{ if .SubItems.appuio_cloud_memory_subquery_cpu_request -}}
-↳ Compensation for excess CPU Requests: {{.SubItems.appuio_cloud_memory_subquery_cpu_request.QuantityAvg | perMinute | printf "%.2f" }} {{ .Unit }} / Minute
+{{ if .Item.SubItems.appuio_cloud_memory_subquery_cpu_request -}}
+↳ Compensation for excess CPU Requests: {{ .Item.SubItems.appuio_cloud_memory_subquery_cpu_request.QuantityAvg | perMinute | printf "%.2f" }} {{ .Item.Unit }} / Minute
 {{ end -}}
 {{- end -}}
