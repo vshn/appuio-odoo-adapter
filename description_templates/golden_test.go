@@ -49,6 +49,12 @@ func TestGenerateGolden(t *testing.T) {
 		sourceKeys = append(sourceKeys, strings.TrimSuffix(name, extension))
 	}
 
+	sourceKeys = append(sourceKeys, "kafka:exoscale:*:*:business-16", "kafka:exoscale:*:*:premium-30x-32")
+	sourceKeys = append(sourceKeys, "opensearch:exoscale:*:*:startup-8", "opensearch:exoscale:*:*:premium-30x-16")
+	sourceKeys = append(sourceKeys, "redis:exoscale:*:*:hobbyist-2", "redis:exoscale:*:*:premium-16")
+	sourceKeys = append(sourceKeys, "postgres:exoscale:*:*:startup-8", "postgres:exoscale:*:*:premium-32")
+	sourceKeys = append(sourceKeys, "mysql:exoscale:*:*:startup-16", "mysql:exoscale:*:*:business-225")
+
 	baseItem := invoice.Item{
 		Description: "Long form query description",
 		QueryName:   "default_query",

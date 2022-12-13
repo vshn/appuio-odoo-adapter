@@ -1,0 +1,10 @@
+Exoscale Kafka
+
+{{- define "_dbaas_usage" -}}
+{{ $keySeg := splitList ":" .Source -}}
+{{ if ge (len $keySeg) 5 -}}
+Plan: {{ index $keySeg 4 }}
+{{ end -}}
+Qty: {{.Quantity | printf "%.0f"}} Instance-Hours
+Unit Price: CHF {{.PricePerUnit | printf "%.8f"}} / {{.Unit}} / Hour
+{{ end -}}
