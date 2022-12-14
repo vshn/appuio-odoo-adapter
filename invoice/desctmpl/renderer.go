@@ -40,6 +40,8 @@ func ItemDescriptionTemplateRendererFromFS(fs fs.FS, extension string) (*ItemDes
 }
 
 // RenderItemDescription renders an item description. Uses the `.ProductRef.Source` as the key to look which template to use.
+// If there are no exact matches, it will try to find templates that match a substring of the key using longest prefix match.
+// Example: Source "foo:bar:buzz" will match template "foo:bar" if template "foo:bar:buzz" does not exist.
 func (r *ItemDescriptionTemplateRenderer) RenderItemDescription(_ context.Context, item invoice.Item) (string, error) {
 	tmpl, err := r.lookup(item.ProductRef.Source)
 	if err != nil {
