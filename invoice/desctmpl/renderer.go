@@ -40,14 +40,27 @@ func ItemDescriptionTemplateRendererFromFS(fs fs.FS, extension string) (*ItemDes
 }
 
 // RenderItemDescription renders an item description. Uses the `.ProductRef.Source` as the key to look which template to use.
+// If there are no exact matches, it will try to find templates that match a substring of the key using longest prefix match.
+// Example: Source "foo:bar:buzz" will match template "foo:bar" if template "foo:bar:buzz" does not exist.
 func (r *ItemDescriptionTemplateRenderer) RenderItemDescription(_ context.Context, item invoice.Item) (string, error) {
-	key := item.ProductRef.Source
-	tmpl := r.root.Lookup(key + r.extension)
-	if tmpl == nil {
-		return "", fmt.Errorf("failed to find template for `ProductRef.Source=%q`%s", key, r.root.DefinedTemplates())
+	tmpl, err := r.lookup(item.ProductRef.Source)
+	if err != nil {
+		return "", err
+	}
+	b := &strings.Builder{}
+	err = tmpl.Execute(b, item)
+	return b.String(), err
+}
+
+func (r *ItemDescriptionTemplateRenderer) lookup(key string) (*template.Template, error) {
+
+	segments := strings.Split(key, ":")
+	for i := len(segments); i > 0; i-- {
+		tmpl := r.root.Lookup(strings.Join(segments[:i], ":") + r.extension)
+		if tmpl != nil {
+			return tmpl, nil
+		}
 	}
 
-	b := &strings.Builder{}
-	err := r.root.ExecuteTemplate(b, item.ProductRef.Source+r.extension, item)
-	return b.String(), err
+	return nil, fmt.Errorf("failed to find template for `ProductRef.Source=%q`%s", key, r.root.DefinedTemplates())
 }
