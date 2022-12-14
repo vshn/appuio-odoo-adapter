@@ -68,7 +68,7 @@ func TestRenderItemDescription(t *testing.T) {
 		},
 
 		{
-			"specialized kafka source with sepecial tempalte",
+			"specialized kafka source with special template",
 			invoice.Item{ProductRef: invoice.ProductRef{Source: "kafka:exoscale:*:*:premium-30x-33"}, Total: 12},
 			"not so kafkaesque: 12",
 			require.NoError,
