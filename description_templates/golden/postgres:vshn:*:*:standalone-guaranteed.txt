@@ -1,0 +1,5 @@
+VSHN-managed PostgreSQL
+
+Plan: standalone-guaranteed
+Qty: 87955674 Instance-Hours
+Unit Price: CHF 0.00000075 / UNIT / Hour
