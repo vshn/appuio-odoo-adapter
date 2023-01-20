@@ -1,4 +1,4 @@
-VSHN-managed PostgreSQL
+PostgreSQL by VSHN
 
 Plan: standalone-besteffort
 Qty: 87955674 Instance-Hours

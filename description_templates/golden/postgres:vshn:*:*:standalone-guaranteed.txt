@@ -1,4 +1,4 @@
-VSHN-managed PostgreSQL
+PostgreSQL by VSHN
 
 Plan: standalone-guaranteed
 Qty: 87955674 Instance-Hours
