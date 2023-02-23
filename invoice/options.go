@@ -16,6 +16,8 @@ type options struct {
 	invoiceLineDefaults model.InvoiceLine
 
 	itemDescriptionRenderer ItemDescriptionRenderer
+
+	invoiceTitle string
 }
 
 // Option represents a report option.
@@ -77,6 +79,17 @@ type invoiceLineDefaults model.InvoiceLine
 
 func (t invoiceLineDefaults) set(o *options) {
 	o.invoiceLineDefaults = model.InvoiceLine(t)
+}
+
+// WithInvoiceTitle sets the title for a invoice.
+func WithInvoiceTitle(title string) Option {
+	return invoiceTitle(title)
+}
+
+type invoiceTitle string
+
+func (t invoiceTitle) set(o *options) {
+	o.invoiceTitle = string(t)
 }
 
 // ItemDescriptionRenderer is the interface used to render an item description.

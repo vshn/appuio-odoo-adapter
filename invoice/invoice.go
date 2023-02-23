@@ -31,7 +31,7 @@ func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invo
 	if partner.Parent.Valid {
 		nameOnInvoice = partner.Parent.Name
 	}
-	name := fmt.Sprintf("%s APPUiO Cloud %s %d", nameOnInvoice, invoice.PeriodStart.Month(), invoice.PeriodStart.Year())
+	name := fmt.Sprintf("%s %s %s %d", nameOnInvoice, opts.invoiceTitle, invoice.PeriodStart.Month(), invoice.PeriodStart.Year())
 	toCreate := opts.invoiceDefaults
 	toCreate.Name = name
 	toCreate.Date = odoo.Date(opts.InvoiceDateOrNow())
