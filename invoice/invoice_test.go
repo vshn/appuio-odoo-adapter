@@ -84,11 +84,10 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 		mockCalculateTaxCall(mockExecutor),
 	)
 
-	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject,
+	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject, invoiceTitle,
 		WithInvoiceDate(invoiceDate),
 		WithInvoiceDefaults(invoiceDefaults),
 		WithInvoiceLineDefaults(invoiceLineDefaults),
-		WithInvoiceTitle(invoiceTitle),
 	)
 	require.NoError(t, err)
 }
@@ -128,55 +127,10 @@ func TestOdooInvoiceCreator_CreateInvoiceWithParentID(t *testing.T) {
 		mockCalculateTaxCall(mockExecutor),
 	)
 
-	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject,
+	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject, invoiceTitle,
 		WithInvoiceDate(invoiceDate),
 		WithInvoiceDefaults(invoiceDefaults),
 		WithInvoiceLineDefaults(invoiceLineDefaults),
-		WithInvoiceTitle(invoiceTitle),
-	)
-	require.NoError(t, err)
-}
-
-func TestOdooInvoiceCreator_CreateInvoiceWithCustomTitle(t *testing.T) {
-	invoiceDate := time.Now()
-
-	invoiceDefaults := model.Invoice{
-		AccountID: 666,
-	}
-	invoiceLineDefaults := model.InvoiceLine{
-		AccountID: 7666,
-	}
-
-	partnerId := 19680000
-	invoiceTitle := "APPUiO Managed OpenShift"
-	subject := invoice.Invoice{
-		PeriodStart: time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC),
-		Tenant: invoice.Tenant{
-			Source: "umbrellacorp",
-			Target: strconv.FormatInt(int64(partnerId), 10),
-		},
-		Categories: []invoice.Category{},
-	}
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	mockExecutor := odoomock.NewMockQueryExecutor(mockCtrl)
-
-	gomock.InOrder(
-		mockPartnerQueryCall(mockExecutor, model.Partner{
-			ID:     1111111111111111111,
-			Name:   "Umbrella Corp Ltd. Billing Department",
-			Parent: model.OdooCompositeID{Valid: true, ID: 19680000, Name: "Umbrella Corp Ltd."},
-		}),
-		mockInvoiceCreateCall(mockExecutor, invoiceDefaults, invoiceDate, partnerId, "Umbrella Corp Ltd. APPUiO Managed OpenShift December 2021"),
-		mockCalculateTaxCall(mockExecutor),
-	)
-
-	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject,
-		WithInvoiceDate(invoiceDate),
-		WithInvoiceDefaults(invoiceDefaults),
-		WithInvoiceLineDefaults(invoiceLineDefaults),
-		WithInvoiceTitle(invoiceTitle),
 	)
 	require.NoError(t, err)
 }

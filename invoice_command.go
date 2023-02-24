@@ -107,11 +107,10 @@ func (cmd *invoiceCommand) execute(context *cli.Context) error {
 	}
 
 	for _, inv := range invoices {
-		id, err := invoice.CreateInvoice(ctx, o, inv,
+		id, err := invoice.CreateInvoice(ctx, o, inv, cmd.InvoiceTitle,
 			invoice.WithInvoiceDefaults(invDefault),
 			invoice.WithInvoiceLineDefaults(invLineDefault),
 			invoice.WithItemDescriptionRenderer(descTemplates),
-			invoice.WithInvoiceTitle(cmd.InvoiceTitle),
 		)
 		log.Info("Created invoice", "id", id)
 		if err != nil {
