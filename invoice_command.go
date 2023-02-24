@@ -32,6 +32,8 @@ type invoiceCommand struct {
 	InvoiceDefaultsPath string
 
 	ItemDescriptionTemplatesPath string
+
+	InvoiceTitle string
 }
 
 var invoiceCommandName = "invoice"
@@ -54,6 +56,8 @@ func newinvoiceCommand() *cli.Command {
 				EnvVars: envVars("INVOICE_DEFAULTS_PATH"), Destination: &command.InvoiceDefaultsPath, Required: false},
 			&cli.StringFlag{Name: "item-description-templates-path", Usage: "Path to a directory with templates. The Files must be named `PRODUCT_SOURCE.gotmpl`.",
 				EnvVars: envVars("ITEM_DESCRIPTION_TEMPLATES_PATH"), Destination: &command.ItemDescriptionTemplatesPath, Value: "description_templates/", Required: false},
+			&cli.StringFlag{Name: "invoice-title", Usage: "Title of the generated invoice.",
+				EnvVars: envVars("INVOICE_TITLE"), Destination: &command.InvoiceTitle, Value: "APPUiO Cloud", Required: false},
 		},
 	}
 }
@@ -103,7 +107,7 @@ func (cmd *invoiceCommand) execute(context *cli.Context) error {
 	}
 
 	for _, inv := range invoices {
-		id, err := invoice.CreateInvoice(ctx, o, inv,
+		id, err := invoice.CreateInvoice(ctx, o, inv, cmd.InvoiceTitle,
 			invoice.WithInvoiceDefaults(invDefault),
 			invoice.WithInvoiceLineDefaults(invLineDefault),
 			invoice.WithItemDescriptionRenderer(descTemplates),

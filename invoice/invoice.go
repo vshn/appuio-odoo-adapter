@@ -12,7 +12,7 @@ import (
 )
 
 // CreateInvoice creates a new invoice in Odoo.
-func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invoice, options ...Option) (int, error) {
+func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invoice, invoiceTitle string, options ...Option) (int, error) {
 	opts := buildOptions(options)
 
 	partnerID, err := strconv.Atoi(invoice.Tenant.Target)
@@ -31,7 +31,7 @@ func CreateInvoice(ctx context.Context, client *model.Odoo, invoice invoice.Invo
 	if partner.Parent.Valid {
 		nameOnInvoice = partner.Parent.Name
 	}
-	name := fmt.Sprintf("%s APPUiO Cloud %s %d", nameOnInvoice, invoice.PeriodStart.Month(), invoice.PeriodStart.Year())
+	name := fmt.Sprintf("%s %s %s %d", nameOnInvoice, invoiceTitle, invoice.PeriodStart.Month(), invoice.PeriodStart.Year())
 	toCreate := opts.invoiceDefaults
 	toCreate.Name = name
 	toCreate.Date = odoo.Date(opts.InvoiceDateOrNow())

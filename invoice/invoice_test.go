@@ -29,6 +29,7 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 	}
 
 	partnerId := 19680000
+	invoiceTitle := "APPUiO Cloud"
 	subject := invoice.Invoice{
 		PeriodStart: time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC),
 		Tenant: invoice.Tenant{
@@ -83,7 +84,7 @@ func TestOdooInvoiceCreator_CreateInvoice(t *testing.T) {
 		mockCalculateTaxCall(mockExecutor),
 	)
 
-	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject,
+	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject, invoiceTitle,
 		WithInvoiceDate(invoiceDate),
 		WithInvoiceDefaults(invoiceDefaults),
 		WithInvoiceLineDefaults(invoiceLineDefaults),
@@ -102,6 +103,7 @@ func TestOdooInvoiceCreator_CreateInvoiceWithParentID(t *testing.T) {
 	}
 
 	partnerId := 19680000
+	invoiceTitle := "APPUiO Cloud"
 	subject := invoice.Invoice{
 		PeriodStart: time.Date(2021, time.December, 1, 0, 0, 0, 0, time.UTC),
 		Tenant: invoice.Tenant{
@@ -125,7 +127,7 @@ func TestOdooInvoiceCreator_CreateInvoiceWithParentID(t *testing.T) {
 		mockCalculateTaxCall(mockExecutor),
 	)
 
-	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject,
+	_, err := CreateInvoice(context.Background(), model.NewOdoo(mockExecutor), subject, invoiceTitle,
 		WithInvoiceDate(invoiceDate),
 		WithInvoiceDefaults(invoiceDefaults),
 		WithInvoiceLineDefaults(invoiceLineDefaults),
