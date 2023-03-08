@@ -1,0 +1,4 @@
+Redis by VSHN
+
+Qty: 87955674 Instance-Hours
+Unit Price: CHF 0.00000075 / UNIT / Hour
