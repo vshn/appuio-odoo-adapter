@@ -32,7 +32,7 @@ jobs:
         run: make test
 
       - name: Upload code coverage report to Code Climate
-        uses: paambaati/codeclimate-action@v3.2.0
+        uses: paambaati/codeclimate-action@v4.0.0
         env:
           CC_TEST_REPORTER_ID: 6a646f2dfe95a716f8e554d08c4c6a13b9adfe8fd379be717e261fde5523837b
         with:
