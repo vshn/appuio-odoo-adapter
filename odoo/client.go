@@ -109,6 +109,7 @@ func (c Client) requestSession(ctx context.Context, login string, password strin
 		return nil, newCreatingRequestError(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 
 	// Send request
 	resp, err := c.http.Do(req)

@@ -112,10 +112,10 @@ func (cmd *invoiceCommand) execute(context *cli.Context) error {
 			invoice.WithInvoiceLineDefaults(invLineDefault),
 			invoice.WithItemDescriptionRenderer(descTemplates),
 		)
-		log.Info("Created invoice", "id", id)
 		if err != nil {
 			return fmt.Errorf("error creating invoice %+v: %w", inv, err)
 		}
+		log.Info("Created invoice", "id", id)
 	}
 
 	return nil
