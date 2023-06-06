@@ -49,12 +49,12 @@ func TestGenerateGolden(t *testing.T) {
 		sourceKeys = append(sourceKeys, strings.TrimSuffix(name, extension))
 	}
 
-	sourceKeys = append(sourceKeys, "kafka:exoscale:*:*:business-16", "kafka:exoscale:*:*:premium-30x-32")
-	sourceKeys = append(sourceKeys, "opensearch:exoscale:*:*:startup-8", "opensearch:exoscale:*:*:premium-30x-16")
-	sourceKeys = append(sourceKeys, "redis:exoscale:*:*:hobbyist-2", "redis:exoscale:*:*:premium-16")
-	sourceKeys = append(sourceKeys, "postgres:exoscale:*:*:startup-8", "postgres:exoscale:*:*:premium-32")
-	sourceKeys = append(sourceKeys, "postgres:vshn:*:*:standalone-besteffort", "postgres:vshn:*:*:standalone-guaranteed")
-	sourceKeys = append(sourceKeys, "mysql:exoscale:*:*:startup-16", "mysql:exoscale:*:*:business-225")
+	sourceKeys = append(sourceKeys, "appcat_kafka:exoscale:*:*:business-16", "appcat_kafka:exoscale:*:*:premium-30x-32")
+	sourceKeys = append(sourceKeys, "appcat_opensearch:exoscale:*:*:startup-8", "appcat_opensearch:exoscale:*:*:premium-30x-16")
+	sourceKeys = append(sourceKeys, "appcat_redis:exoscale:*:*:hobbyist-2", "appcat_redis:exoscale:*:*:premium-16")
+	sourceKeys = append(sourceKeys, "appcat_postgres:exoscale:*:*:startup-8", "appcat_postgres:exoscale:*:*:premium-32")
+	sourceKeys = append(sourceKeys, "appcat_postgres:vshn:*:*:standalone-besteffort", "appcat_postgres:vshn:*:*:standalone-guaranteed")
+	sourceKeys = append(sourceKeys, "appcat_mysql:exoscale:*:*:startup-16", "appcat_mysql:exoscale:*:*:business-225")
 
 	baseItem := invoice.Item{
 		Description: "Long form query description",
