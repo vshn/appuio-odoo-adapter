@@ -53,7 +53,7 @@ func TestGenerateGolden(t *testing.T) {
 	sourceKeys = append(sourceKeys, "appcat_opensearch:exoscale:*:*:startup-8", "appcat_opensearch:exoscale:*:*:premium-30x-16")
 	sourceKeys = append(sourceKeys, "appcat_redis:exoscale:*:*:hobbyist-2", "appcat_redis:exoscale:*:*:premium-16")
 	sourceKeys = append(sourceKeys, "appcat_postgres:exoscale:*:*:startup-8", "appcat_postgres:exoscale:*:*:premium-32")
-	sourceKeys = append(sourceKeys, "appcat_postgres:vshn:*:*:standalone-besteffort", "appcat_postgres:vshn:*:*:standalone-guaranteed")
+	sourceKeys = append(sourceKeys, "appcat_postgresql:vshn:*:*:standalone-besteffort", "appcat_postgresql:vshn:*:*:standalone-guaranteed")
 	sourceKeys = append(sourceKeys, "appcat_mysql:exoscale:*:*:startup-16", "appcat_mysql:exoscale:*:*:business-225")
 
 	baseItem := invoice.Item{
