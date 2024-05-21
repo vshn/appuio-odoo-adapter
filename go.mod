@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/appuio/appuio-cloud-reporting v0.10.0
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.2.3
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
