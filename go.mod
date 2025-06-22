@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
 	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.8.2
 	github.com/urfave/cli/v2 v2.24.4
 	go.uber.org/zap v1.24.0
